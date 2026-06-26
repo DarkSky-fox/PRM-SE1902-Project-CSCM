@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'screens/manager_menu_screen.dart';
+import 'utils/app_theme.dart';
+import 'screens/splash_screen.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const CSCMApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class CSCMApp extends StatelessWidget {
+  const CSCMApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -19,6 +21,10 @@ class MyApp extends StatelessWidget {
         fontFamily: 'Roboto',
       ),
       home: const ManagerMenuScreen(),
+      title: 'CSCM - Quản lý chuỗi cửa hàng tiện lợi',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.theme,
+      home: const SplashScreen(),
     );
   }
 }
