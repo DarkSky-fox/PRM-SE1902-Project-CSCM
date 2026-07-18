@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../utils/app_theme.dart';
+import '../controllers/login_controller.dart';
 import 'home_screen.dart';
+import 'pos_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,8 +15,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _loginController = LoginController();
 
   bool _isPasswordVisible = false;
   bool _isLoading = false;
@@ -23,10 +25,6 @@ class _LoginScreenState extends State<LoginScreen>
   late Animation<double> _cardOpacity;
   late Animation<Offset> _cardSlide;
   late Animation<double> _logoScale;
-
-  // Demo credentials
-  static const String _demoUsername = 'admin';
-  static const String _demoPassword = '123456';
 
   @override
   void initState() {
@@ -50,10 +48,7 @@ class _LoginScreenState extends State<LoginScreen>
       ),
     );
 
-    _cardSlide = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(
+    _cardSlide = Tween<Offset>(begin: const Offset(0.0, 0.15), end: Offset.zero).animate(
       CurvedAnimation(
         parent: _animationController,
         curve: const Interval(0.3, 1.0, curve: Curves.easeOutCubic),
@@ -66,8 +61,7 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   void dispose() {
     _animationController.dispose();
-    _usernameController.dispose();
-    _passwordController.dispose();
+    _loginController.dispose();
     super.dispose();
   }
 
@@ -79,40 +73,55 @@ class _LoginScreenState extends State<LoginScreen>
       _errorMessage = null;
     });
 
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 1200));
+    await Future.delayed(const Duration(milliseconds: 600));
 
     if (!mounted) return;
 
-    final username = _usernameController.text.trim();
-    final password = _passwordController.text;
+    final user = await _loginController.handleLogin();
 
-    if (username == _demoUsername && password == _demoPassword) {
-      // Login success → navigate to home
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) =>
-              HomeScreen(username: username),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(1.0, 0),
-                end: Offset.zero,
-              ).animate(CurvedAnimation(
-                parent: animation,
-                curve: Curves.easeOutCubic,
-              )),
-              child: child,
-            );
-          },
-          transitionDuration: const Duration(milliseconds: 500),
-        ),
-      );
+    if (user != null) {
+      if (user['Status'] == 0) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Quản lý hoặc Chủ chuỗi để mở lại.';
+        });
+        return;
+      }
+
+      final username = _loginController.usernameController.text.trim();
+      final roleId = user['RoleID'] as int;
+      final storeId = user['StoreID'] as int?;
+      final employeeId = user['EmployeeID'] as int;
+      final fullName = user['FullName'] as String;
+
+      if (roleId == 3) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => PosScreen(
+              username: username,
+              employeeId: employeeId,
+              storeId: storeId ?? 1,
+              fullName: fullName,
+            ),
+          ),
+        );
+      } else {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => HomeScreen(
+              username: username,
+              roleId: roleId,
+              storeId: storeId,
+              employeeId: employeeId,
+              fullName: fullName,
+            ),
+          ),
+        );
+      }
     } else {
-      // Login failed
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Tên đăng nhập hoặc mật khẩu không đúng!';
+        _errorMessage = 'Tên đăng nhập hoặc mật khẩu không chính xác.';
       });
     }
   }
@@ -120,97 +129,89 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.darkBg,
       body: Container(
         decoration: const BoxDecoration(gradient: AppTheme.splashGradient),
         child: SafeArea(
-          child: Stack(
-            children: [
-              // ─── Background decorations ───────────────────────────────────
-              Positioned(
-                top: -60,
-                right: -60,
-                child: Container(
-                  width: 220,
-                  height: 220,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.04),
-                  ),
-                ),
-              ),
-              Positioned(
-                bottom: -80,
-                left: -40,
-                child: Container(
-                  width: 260,
-                  height: 260,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.04),
-                  ),
-                ),
-              ),
-
-              // ─── Main scrollable content ──────────────────────────────────
-              SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 28),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 48),
-
-                    // Logo
-                    AnimatedBuilder(
-                      animation: _animationController,
-                      builder: (context, child) {
-                        return Transform.scale(
-                          scale: _logoScale.value,
-                          child: child,
-                        );
-                      },
-                      child: _buildTopLogo(),
+          child: SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                  minHeight: MediaQuery.of(context).size.height -
+                      MediaQuery.of(context).padding.top -
+                      MediaQuery.of(context).padding.bottom),
+              child: Stack(
+                children: [
+                  Positioned(
+                    top: -40,
+                    right: -40,
+                    child: Container(
+                      width: 200,
+                      height: 200,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFF00C96B).withAlpha(8),
+                      ),
                     ),
-
-                    const SizedBox(height: 40),
-
-                    // Login Card
-                    AnimatedBuilder(
-                      animation: _animationController,
-                      builder: (context, child) {
-                        return Opacity(
-                          opacity: _cardOpacity.value,
-                          child: SlideTransition(
-                            position: _cardSlide,
+                  ),
+                  Positioned(
+                    bottom: -60,
+                    left: -60,
+                    child: Container(
+                      width: 240,
+                      height: 240,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFF1A6B3C).withAlpha(10),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 60),
+                        AnimatedBuilder(
+                          animation: _animationController,
+                          builder: (_, child) => Transform.scale(
+                            scale: _logoScale.value,
                             child: child,
                           ),
-                        );
-                      },
-                      child: _buildLoginCard(),
+                          child: _buildLogoSection(),
+                        ),
+                        const SizedBox(height: 48),
+                        AnimatedBuilder(
+                          animation: _animationController,
+                          builder: (_, child) => Opacity(
+                            opacity: _cardOpacity.value,
+                            child: SlideTransition(
+                              position: _cardSlide,
+                              child: child,
+                            ),
+                          ),
+                          child: _buildLoginCard(),
+                        ),
+                        const SizedBox(height: 32),
+                        Text(
+                          'Phiên bản 1.0.0',
+                          style: TextStyle(
+                            color: AppTheme.textOnDarkMuted.withAlpha(120),
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                      ],
                     ),
-
-                    const SizedBox(height: 24),
-
-                    // Demo hint
-                    AnimatedBuilder(
-                      animation: _animationController,
-                      builder: (context, child) => Opacity(
-                        opacity: _cardOpacity.value,
-                        child: child,
-                      ),
-                      child: _buildDemoHint(),
-                    ),
-
-                    const SizedBox(height: 40),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildTopLogo() {
+  Widget _buildLogoSection() {
     return Column(
       children: [
         Container(
@@ -221,44 +222,36 @@ class _LoginScreenState extends State<LoginScreen>
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xFF2E8B57), Color(0xFF1A5C34)],
+              colors: [Color(0xFF1E5C3A), Color(0xFF0A3020)],
             ),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.primary.withOpacity(0.5),
-                blurRadius: 24,
+                color: const Color(0xFF00C96B).withAlpha(50),
+                blurRadius: 30,
                 spreadRadius: 4,
               ),
             ],
-            border: Border.all(
-              color: Colors.white.withOpacity(0.25),
-              width: 2,
-            ),
+            border: Border.all(color: Colors.white.withAlpha(20), width: 2),
           ),
-          child: const Icon(
-            Icons.store_mall_directory_rounded,
-            color: Colors.white,
-            size: 38,
-          ),
+          child: const Icon(Icons.lock_rounded, color: Colors.white, size: 36),
         ),
-        const SizedBox(height: 16),
-        const Text(
+        const SizedBox(height: 20),
+        Text(
           'CSCM',
-          style: TextStyle(
+          style: GoogleFonts.inter(
             color: Colors.white,
-            fontSize: 32,
-            fontWeight: FontWeight.w900,
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
             letterSpacing: 6,
           ),
         ),
-        const SizedBox(height: 4),
-        const Text(
-          'Hệ thống quản lý chuỗi cửa hàng tiện lợi',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Colors.white60,
-            fontSize: 13,
-            letterSpacing: 0.5,
+        const SizedBox(height: 6),
+        Text(
+          'Đăng nhập hệ thống',
+          style: GoogleFonts.inter(
+            color: AppTheme.textOnDarkMuted,
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
           ),
         ),
       ],
@@ -267,188 +260,153 @@ class _LoginScreenState extends State<LoginScreen>
 
   Widget _buildLoginCard() {
     return Container(
+      padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        color: AppTheme.darkCard.withAlpha(230),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: AppTheme.darkBorder, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.18),
+            color: Colors.black.withAlpha(80),
             blurRadius: 40,
-            offset: const Offset(0, 16),
+            offset: const Offset(0, 20),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(28),
       child: Form(
         key: _formKey,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Card header
-            const Text(
-              'Đăng nhập',
-              style: TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
+            if (_errorMessage != null) _buildErrorBanner(),
+            if (_errorMessage != null) const SizedBox(height: 20),
+            Text(
+              'Chào mừng trở lại',
+              style: GoogleFonts.inter(
+                color: AppTheme.textOnDark,
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 4),
-            const Text(
-              'Chào mừng trở lại! Vui lòng đăng nhập.',
-              style: TextStyle(
-                color: AppTheme.textSecondary,
+            const SizedBox(height: 6),
+            Text(
+              'Nhập thông tin đăng nhập để tiếp tục',
+              style: GoogleFonts.inter(
+                color: AppTheme.textOnDarkMuted,
                 fontSize: 13,
               ),
             ),
-
-            const SizedBox(height: 28),
-
-            // Error message
-            if (_errorMessage != null) ...[
-              _buildErrorBanner(),
-              const SizedBox(height: 16),
-            ],
-
-            // Username field
-            const Text(
-              'Tên đăng nhập',
-              style: TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 24),
             TextFormField(
-              controller: _usernameController,
-              keyboardType: TextInputType.text,
-              textInputAction: TextInputAction.next,
-              style: const TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
+              controller: _loginController.usernameController,
+              style: GoogleFonts.inter(color: AppTheme.textOnDark, fontSize: 15),
+              decoration: _darkInputDecoration(
+                label: 'Tên đăng nhập',
+                hint: 'Nhập username',
+                icon: Icons.person_outline_rounded,
               ),
-              decoration: const InputDecoration(
-                hintText: 'Nhập tên đăng nhập',
-                prefixIcon: Icon(Icons.person_outline_rounded, size: 22),
-              ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Vui lòng nhập tên đăng nhập';
-                }
-                return null;
-              },
+              validator: (v) => v == null || v.isEmpty ? 'Vui lòng nhập tên đăng nhập' : null,
             ),
-
-            const SizedBox(height: 20),
-
-            // Password field
-            const Text(
-              'Mật khẩu',
-              style: TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
             TextFormField(
-              controller: _passwordController,
+              controller: _loginController.passwordController,
               obscureText: !_isPasswordVisible,
-              textInputAction: TextInputAction.done,
-              onFieldSubmitted: (_) => _handleLogin(),
-              style: const TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-              ),
-              decoration: InputDecoration(
-                hintText: 'Nhập mật khẩu',
-                prefixIcon: const Icon(Icons.lock_outline_rounded, size: 22),
+              style: GoogleFonts.inter(color: AppTheme.textOnDark, fontSize: 15),
+              decoration: _darkInputDecoration(
+                label: 'Mật khẩu',
+                hint: 'Nhập mật khẩu',
+                icon: Icons.lock_outline_rounded,
+              ).copyWith(
                 suffixIcon: IconButton(
-                  onPressed: () {
-                    setState(() {
-                      _isPasswordVisible = !_isPasswordVisible;
-                    });
-                  },
                   icon: Icon(
                     _isPasswordVisible
                         ? Icons.visibility_off_outlined
                         : Icons.visibility_outlined,
-                    size: 22,
-                    color: AppTheme.textSecondary,
+                    color: AppTheme.textOnDarkMuted,
+                    size: 20,
                   ),
+                  onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
                 ),
               ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Vui lòng nhập mật khẩu';
-                }
-                if (value.length < 6) {
-                  return 'Mật khẩu phải có ít nhất 6 ký tự';
-                }
-                return null;
-              },
+              validator: (v) => v == null || v.length < 6 ? 'Mật khẩu phải có ít nhất 6 ký tự' : null,
             ),
-
-            const SizedBox(height: 32),
-
-            // Login button
-            SizedBox(
-              width: double.infinity,
-              child: _isLoading
-                  ? Container(
-                      height: 54,
-                      decoration: BoxDecoration(
-                        color: AppTheme.primary.withOpacity(0.7),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: const Center(
-                        child: SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        ),
-                      ),
-                    )
-                  : Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: AppTheme.buttonShadow,
-                      ),
-                      child: ElevatedButton(
-                        onPressed: _handleLogin,
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: const Size(double.infinity, 54),
-                          backgroundColor: AppTheme.primary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.login_rounded, size: 20),
-                            SizedBox(width: 8),
-                            Text(
-                              'ĐĂNG NHẬP',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 1.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-            ),
+            const SizedBox(height: 28),
+            _buildLoginButton(),
           ],
+        ),
+      ),
+    );
+  }
+
+  InputDecoration _darkInputDecoration({
+    required String label,
+    required String hint,
+    required IconData icon,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      prefixIcon: Icon(icon, color: AppTheme.textOnDarkMuted, size: 20),
+      filled: true,
+      fillColor: AppTheme.darkElevated,
+      labelStyle: GoogleFonts.inter(color: AppTheme.textOnDarkMuted, fontSize: 14),
+      hintStyle: GoogleFonts.inter(
+        color: AppTheme.textOnDarkMuted.withAlpha(150),
+        fontSize: 14,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: AppTheme.darkBorder, width: 1.5),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: AppTheme.primaryLight, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: AppTheme.error, width: 1.5),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: AppTheme.error, width: 2),
+      ),
+      errorStyle: GoogleFonts.inter(color: AppTheme.error, fontSize: 12),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+    );
+  }
+
+  Widget _buildLoginButton() {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: _isLoading ? null : _handleLogin,
+        borderRadius: BorderRadius.circular(14),
+        child: Ink(
+          decoration: BoxDecoration(
+            gradient: _isLoading ? null : AppTheme.primaryGradient,
+            color: _isLoading ? AppTheme.darkElevated : null,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: _isLoading ? [] : AppTheme.buttonShadow,
+          ),
+          child: Container(
+            height: 54,
+            alignment: Alignment.center,
+            child: _isLoading
+                ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                  )
+                : Text(
+                    'ĐĂNG NHẬP',
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+          ),
         ),
       ),
     );
@@ -456,95 +414,25 @@ class _LoginScreenState extends State<LoginScreen>
 
   Widget _buildErrorBanner() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppTheme.error.withOpacity(0.08),
+        color: const Color(0xFF3D1515),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppTheme.error.withOpacity(0.3),
-          width: 1,
-        ),
+        border: Border.all(color: AppTheme.error.withAlpha(80), width: 1),
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.error_outline_rounded,
-            color: AppTheme.error,
-            size: 20,
-          ),
+          const Icon(Icons.error_outline_rounded, color: Color(0xFFFF8A80), size: 18),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               _errorMessage!,
-              style: const TextStyle(
-                color: AppTheme.error,
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-              ),
+              style: GoogleFonts.inter(color: const Color(0xFFFF8A80), fontSize: 13, height: 1.4),
             ),
           ),
           GestureDetector(
             onTap: () => setState(() => _errorMessage = null),
-            child: Icon(
-              Icons.close_rounded,
-              color: AppTheme.error.withOpacity(0.6),
-              size: 18,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDemoHint() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.15),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: AppTheme.accent.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(
-              Icons.info_outline_rounded,
-              color: AppTheme.accent,
-              size: 18,
-            ),
-          ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Tài khoản demo',
-                  style: TextStyle(
-                    color: AppTheme.accent,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  'Tên đăng nhập: admin  •  Mật khẩu: 123456',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
+            child: const Icon(Icons.close_rounded, color: Color(0xFFFF8A80), size: 18),
           ),
         ],
       ),
