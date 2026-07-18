@@ -4,6 +4,7 @@ class ProductModel {
   final int? categoryId;
   final int? supplierId;
   final String? description;
+  final String? imageUrl;
 
   ProductModel({
     this.productId,
@@ -11,6 +12,7 @@ class ProductModel {
     this.categoryId,
     this.supplierId,
     this.description,
+    this.imageUrl,
   });
 
   Map<String, dynamic> toMap() {
@@ -20,6 +22,7 @@ class ProductModel {
       'CategoryID': categoryId,
       'SupplierID': supplierId,
       'Description': description,
+      'ImageUrl': imageUrl,
     };
   }
 
@@ -30,6 +33,7 @@ class ProductModel {
       categoryId: map['CategoryID'] as int?,
       supplierId: map['SupplierID'] as int?,
       description: map['Description'] as String?,
+      imageUrl: map['ImageUrl'] as String?,
     );
   }
 }

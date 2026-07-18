@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../utils/app_theme.dart';
 import 'login_screen.dart';
 
@@ -25,40 +26,33 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
 
-    // Logo animation controller
     _logoController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
     );
 
-    // Text animation controller
     _textController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 700),
     );
 
-    // Pulse animation controller (repeating)
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1800),
     )..repeat(reverse: true);
 
-    // Logo scale: 0.3 → 1.0 with overshoot
     _logoScale = Tween<double>(begin: 0.3, end: 1.0).animate(
       CurvedAnimation(parent: _logoController, curve: Curves.elasticOut),
     );
 
-    // Logo opacity: 0 → 1
     _logoOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _logoController, curve: const Interval(0.0, 0.5)),
     );
 
-    // Text fade in
     _textOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _textController, curve: Curves.easeIn),
     );
 
-    // Text slide up from below
     _textSlide = Tween<Offset>(
       begin: const Offset(0, 0.4),
       end: Offset.zero,
@@ -66,23 +60,18 @@ class _SplashScreenState extends State<SplashScreen>
       CurvedAnimation(parent: _textController, curve: Curves.easeOutCubic),
     );
 
-    // Pulse scale for background ring effect
     _pulseScale = Tween<double>(begin: 0.95, end: 1.05).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
-    // Start sequence
     _startAnimations();
   }
 
   Future<void> _startAnimations() async {
     await Future.delayed(const Duration(milliseconds: 300));
     _logoController.forward();
-
     await Future.delayed(const Duration(milliseconds: 600));
     _textController.forward();
-
-    // Navigate to login after 3 seconds
     await Future.delayed(const Duration(milliseconds: 2100));
     if (mounted) {
       Navigator.of(context).pushReplacement(
@@ -90,10 +79,7 @@ class _SplashScreenState extends State<SplashScreen>
           pageBuilder: (context, animation, secondaryAnimation) =>
               const LoginScreen(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity: animation,
-              child: child,
-            );
+            return FadeTransition(opacity: animation, child: child);
           },
           transitionDuration: const Duration(milliseconds: 600),
         ),
@@ -116,118 +102,84 @@ class _SplashScreenState extends State<SplashScreen>
         decoration: const BoxDecoration(gradient: AppTheme.splashGradient),
         child: Stack(
           children: [
-            // ─── Decorative circles background ──────────────────────────────
+            // ── Decorative circles ────────────────────────────────────────────
             Positioned(
-              top: -80,
-              right: -80,
+              top: -60, right: -60,
               child: Container(
-                width: 280,
-                height: 280,
+                width: 260, height: 260,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.04),
+                  color: const Color(0xFF00C96B).withAlpha(8),
                 ),
               ),
             ),
             Positioned(
-              bottom: -120,
-              left: -60,
+              bottom: -100, left: -80,
               child: Container(
-                width: 320,
-                height: 320,
+                width: 300, height: 300,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.04),
+                  color: const Color(0xFF1A6B3C).withAlpha(12),
                 ),
               ),
             ),
             Positioned(
-              top: 200,
-              left: -100,
+              top: 180, left: -120,
               child: Container(
-                width: 200,
-                height: 200,
+                width: 180, height: 180,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppTheme.accent.withOpacity(0.06),
+                  color: const Color(0xFFF5A623).withAlpha(6),
                 ),
               ),
             ),
 
-            // ─── Main content ────────────────────────────────────────────────
+            // ── Main content ──────────────────────────────────────────────────
             Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Logo container
                   AnimatedBuilder(
-                    animation: Listenable.merge(
-                        [_logoController, _pulseController]),
+                    animation: Listenable.merge([_logoController, _pulseController]),
                     builder: (context, child) {
                       return Opacity(
                         opacity: _logoOpacity.value,
-                        child: Transform.scale(
-                          scale: _logoScale.value,
-                          child: child,
-                        ),
+                        child: Transform.scale(scale: _logoScale.value, child: child),
                       );
                     },
                     child: _buildLogoWidget(),
                   ),
-
                   const SizedBox(height: 40),
-
-                  // Brand name & tagline
                   AnimatedBuilder(
                     animation: _textController,
                     builder: (context, child) {
                       return Opacity(
                         opacity: _textOpacity.value,
-                        child: SlideTransition(
-                          position: _textSlide,
-                          child: child,
-                        ),
+                        child: SlideTransition(position: _textSlide, child: child),
                       );
                     },
                     child: _buildTextContent(),
                   ),
-
                   const SizedBox(height: 80),
-
-                  // Loading indicator
                   AnimatedBuilder(
                     animation: _textController,
-                    builder: (context, child) {
-                      return Opacity(
-                        opacity: _textOpacity.value,
-                        child: child,
-                      );
-                    },
+                    builder: (context, child) => Opacity(opacity: _textOpacity.value, child: child),
                     child: _buildLoadingIndicator(),
                   ),
                 ],
               ),
             ),
 
-            // ─── Version tag ─────────────────────────────────────────────────
+            // ── Version ───────────────────────────────────────────────────────
             Positioned(
-              bottom: 40,
-              left: 0,
-              right: 0,
+              bottom: 40, left: 0, right: 0,
               child: AnimatedBuilder(
                 animation: _textController,
-                builder: (context, child) => Opacity(
-                  opacity: _textOpacity.value,
-                  child: child,
-                ),
+                builder: (context, child) => Opacity(opacity: _textOpacity.value, child: child),
                 child: const Text(
                   'Phiên bản 1.0.0',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white38,
-                    fontSize: 12,
-                    letterSpacing: 0.5,
-                  ),
+                  style: TextStyle(color: Colors.white30, fontSize: 12),
                 ),
               ),
             ),
@@ -244,57 +196,48 @@ class _SplashScreenState extends State<SplashScreen>
         return Stack(
           alignment: Alignment.center,
           children: [
-            // Outer pulse ring
             Transform.scale(
-              scale: _pulseScale.value * 1.3,
+              scale: _pulseScale.value,
               child: Container(
-                width: 130,
-                height: 130,
+                width: 160, height: 160,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.05),
+                  color: const Color(0xFF00C96B).withAlpha(12),
                 ),
               ),
             ),
-            // Middle ring
             Transform.scale(
-              scale: _pulseScale.value * 1.1,
+              scale: _pulseScale.value,
               child: Container(
-                width: 120,
-                height: 120,
+                width: 145, height: 145,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.08),
+                  color: const Color(0xFF00C96B).withAlpha(20),
                 ),
               ),
             ),
-            // Logo circle
             Container(
-              width: 110,
-              height: 110,
+              width: 120, height: 120,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xFF2E8B57), Color(0xFF1A5C34)],
+                  colors: [Color(0xFF1E5C3A), Color(0xFF0D3522)],
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.primary.withOpacity(0.5),
-                    blurRadius: 30,
-                    spreadRadius: 5,
+                    color: const Color(0xFF00C96B).withAlpha(50),
+                    blurRadius: 40,
+                    spreadRadius: 8,
                   ),
                 ],
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.2),
-                  width: 2,
-                ),
+                border: Border.all(color: Colors.white.withAlpha(25), width: 2),
               ),
               child: const Icon(
                 Icons.store_mall_directory_rounded,
                 color: Colors.white,
-                size: 54,
+                size: 56,
               ),
             ),
           ],
@@ -306,63 +249,37 @@ class _SplashScreenState extends State<SplashScreen>
   Widget _buildTextContent() {
     return Column(
       children: [
-        // Brand name
-        const Text(
+        Text(
           'CSCM',
-          style: TextStyle(
+          style: GoogleFonts.inter(
             color: Colors.white,
-            fontSize: 48,
+            fontSize: 52,
             fontWeight: FontWeight.w900,
-            letterSpacing: 8,
-            height: 1.0,
+            letterSpacing: 10,
           ),
         ),
         const SizedBox(height: 8),
-        // Divider line with accent color
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 40,
-              height: 2,
-              color: AppTheme.accent.withOpacity(0.6),
-            ),
+            Container(width: 40, height: 2, color: AppTheme.primaryLight.withAlpha(153)),
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 8),
-              width: 8,
-              height: 8,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppTheme.accent,
-              ),
+              width: 8, height: 8,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: AppTheme.primaryLight.withAlpha(178)),
             ),
-            Container(
-              width: 40,
-              height: 2,
-              color: AppTheme.accent.withOpacity(0.6),
-            ),
+            Container(width: 40, height: 2, color: AppTheme.primaryLight.withAlpha(153)),
           ],
         ),
         const SizedBox(height: 14),
-        // Tagline
-        const Text(
+        Text(
           'Hệ thống quản lý',
-          style: TextStyle(
-            color: Colors.white70,
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
-            letterSpacing: 1.5,
-          ),
+          style: GoogleFonts.inter(color: AppTheme.textOnDarkMuted, fontSize: 16, fontWeight: FontWeight.w400, letterSpacing: 1.5),
         ),
         const SizedBox(height: 4),
-        const Text(
+        Text(
           'Chuỗi Cửa Hàng Tiện Lợi',
-          style: TextStyle(
-            color: AppTheme.accent,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 1.2,
-          ),
+          style: GoogleFonts.inter(color: AppTheme.accent, fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 1.2),
         ),
       ],
     );
@@ -372,24 +289,14 @@ class _SplashScreenState extends State<SplashScreen>
     return Column(
       children: [
         SizedBox(
-          width: 36,
-          height: 36,
+          width: 36, height: 36,
           child: CircularProgressIndicator(
             strokeWidth: 2.5,
-            valueColor: AlwaysStoppedAnimation<Color>(
-              AppTheme.accent.withOpacity(0.8),
-            ),
+            valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryLight.withAlpha(200)),
           ),
         ),
         const SizedBox(height: 16),
-        const Text(
-          'Đang khởi động...',
-          style: TextStyle(
-            color: Colors.white54,
-            fontSize: 13,
-            letterSpacing: 0.5,
-          ),
-        ),
+        const Text('Đang khởi động...', style: TextStyle(color: Colors.white54, fontSize: 13)),
       ],
     );
   }

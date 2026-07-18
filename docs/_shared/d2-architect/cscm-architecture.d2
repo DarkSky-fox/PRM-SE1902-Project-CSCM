@@ -1,0 +1,70 @@
+direction: right
+
+Actor: {
+  Cashier: "Thu ngân" { shape: person; style.fill: "#E8F0FE" }
+  Manager: "Quản lý cửa hàng" { shape: person; style.fill: "#E8F0FE" }
+  Admin: "Quản trị viên" { shape: person; style.fill: "#E8F0FE" }
+  Customer: "Khách hàng" { shape: person }
+}
+
+ClientApp: "CSCM Mobile / POS App (Flutter)" {
+  style.fill: "#F4F6F9"
+  
+  UI: "UI Screens" {
+    POS: "Bán hàng (POS)"
+    Inventory: "Quản lý kho"
+    Transfer: "Điều chuyển"
+    Purchase: "Nhập hàng"
+    AdminUI: "Admin Control"
+  }
+  
+  Services: "Service Layer" {
+    DBHelper: "DatabaseHelper"
+  }
+  
+  LocalDB: "SQLite (app_database.db)" {
+    shape: cylinder
+    style.fill: "#E6F4EA"
+  }
+}
+
+CloudBackend: "Central Cloud System" {
+  style.stroke-dash: 3
+  
+  SyncAPI: "Sync API Gateway"
+  SyncService: "Data Sync Service"
+  
+  CentralDB: "Central Database (PostgreSQL)" {
+    shape: cylinder
+    style.fill: "#FFF4E5"
+  }
+}
+
+ExternalServices: "Dịch vụ ngoài" {
+  style.stroke-dash: 3
+  
+  Payment: "Cổng thanh toán"
+  Supplier: "Nhà cung cấp API"
+}
+
+# Interactions:
+Actor.Cashier -> ClientApp.UI.POS: "Sử dụng bán hàng"
+Actor.Manager -> ClientApp.UI.Inventory: "Quản lý kho / điều chuyển"
+Actor.Manager -> ClientApp.UI.Purchase: "Tạo đơn nhập hàng"
+Actor.Admin -> ClientApp.UI.AdminUI: "Cấu hình hệ thống"
+
+ClientApp.UI.POS -> ClientApp.Services.DBHelper: "Thực thi giao dịch"
+ClientApp.UI.Inventory -> ClientApp.Services.DBHelper: "Kiểm tra tồn kho"
+ClientApp.UI.Transfer -> ClientApp.Services.DBHelper: "Ghi nhận điều chuyển"
+ClientApp.UI.Purchase -> ClientApp.Services.DBHelper: "Ghi nhận đơn nhập"
+
+ClientApp.Services.DBHelper -> ClientApp.LocalDB: "Đọc / ghi dữ liệu local"
+
+# Synchronization flow:
+ClientApp.Services.DBHelper -> CloudBackend.SyncAPI: "Đồng bộ dữ liệu (HTTPS)"
+CloudBackend.SyncAPI -> CloudBackend.SyncService: "Xử lý đồng bộ"
+CloudBackend.SyncService -> CloudBackend.CentralDB: "Lưu trữ tổng hợp"
+
+# External calls:
+ClientApp.UI.POS -> ExternalServices.Payment: "Thanh toán (Momo/VNPay)"
+ClientApp.UI.Purchase -> ExternalServices.Supplier: "Gửi PO tự động"
