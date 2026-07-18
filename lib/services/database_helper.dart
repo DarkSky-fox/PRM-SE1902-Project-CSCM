@@ -19,9 +19,18 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _createDB,
+      onUpgrade: _upgradeDB,
     );
+  }
+
+  Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // v1 → v2: Add OpenTime and CloseTime to Store
+      await db.execute('ALTER TABLE Store ADD COLUMN OpenTime TEXT');
+      await db.execute('ALTER TABLE Store ADD COLUMN CloseTime TEXT');
+    }
   }
 
   Future _createDB(Database db, int version) async {
@@ -54,7 +63,9 @@ class DatabaseHelper {
         StoreName TEXT NOT NULL,
         Address TEXT,
         Phone TEXT,
-        Status TEXT
+        Status TEXT,
+        OpenTime TEXT,
+        CloseTime TEXT
       )
     ''');
 

@@ -4,6 +4,8 @@ class StoreModel {
   final String? address;
   final String? phone;
   final String? status;
+  final String? openTime;
+  final String? closeTime;
 
   StoreModel({
     this.storeId,
@@ -11,6 +13,8 @@ class StoreModel {
     this.address,
     this.phone,
     this.status,
+    this.openTime,
+    this.closeTime,
   });
 
   Map<String, dynamic> toMap() {
@@ -20,6 +24,8 @@ class StoreModel {
       'Address': address,
       'Phone': phone,
       'Status': status,
+      'OpenTime': openTime,
+      'CloseTime': closeTime,
     };
   }
 
@@ -30,6 +36,8 @@ class StoreModel {
       address: map['Address'] as String?,
       phone: map['Phone'] as String?,
       status: map['Status'] as String?,
+      openTime: map['OpenTime'] as String?,
+      closeTime: map['CloseTime'] as String?,
     );
   }
 }

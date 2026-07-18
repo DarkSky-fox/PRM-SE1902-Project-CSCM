@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'store/store_list_screen.dart';
+import 'employee/employee_list_screen.dart';
+import 'category/category_list_screen.dart';
+import 'product/product_list_screen.dart';
+import 'supplier/supplier_list_screen.dart';
 
 class ManagerMenuScreen extends StatelessWidget {
   const ManagerMenuScreen({super.key});
@@ -13,13 +18,16 @@ class ManagerMenuScreen extends StatelessWidget {
             _buildHeader(context),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildSectionTitle('STORE OPERATIONS'),
                     const SizedBox(height: 10),
-                    _buildMenuGrid([
+                    _buildMenuGrid(context, [
                       _MenuItem(
                         label: 'Inventory\nManagement',
                         icon: Icons.inventory_2_rounded,
@@ -31,6 +39,12 @@ class ManagerMenuScreen extends StatelessWidget {
                         icon: Icons.local_grocery_store_rounded,
                         color: const Color(0xFF4CAF50),
                         bgColor: const Color(0xFFE8F5E9),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ProductListScreen(),
+                          ),
+                        ),
                       ),
                       _MenuItem(
                         label: 'Order\nManagement',
@@ -49,12 +63,18 @@ class ManagerMenuScreen extends StatelessWidget {
                     const SizedBox(height: 20),
                     _buildSectionTitle('STAFF MANAGEMENT'),
                     const SizedBox(height: 10),
-                    _buildMenuGrid([
+                    _buildMenuGrid(context, [
                       _MenuItem(
                         label: 'Staff\nList',
                         icon: Icons.people_alt_rounded,
                         color: const Color(0xFF00BCD4),
                         bgColor: const Color(0xFFE0F7FA),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const EmployeeListScreen(),
+                          ),
+                        ),
                       ),
                       _MenuItem(
                         label: 'Work\nSchedule',
@@ -79,7 +99,7 @@ class ManagerMenuScreen extends StatelessWidget {
                     const SizedBox(height: 20),
                     _buildSectionTitle('REPORTS & ANALYTICS'),
                     const SizedBox(height: 10),
-                    _buildMenuGrid([
+                    _buildMenuGrid(context, [
                       _MenuItem(
                         label: 'Sales\nReport',
                         icon: Icons.bar_chart_rounded,
@@ -97,24 +117,42 @@ class ManagerMenuScreen extends StatelessWidget {
                     const SizedBox(height: 20),
                     _buildSectionTitle('STORE SETTINGS'),
                     const SizedBox(height: 10),
-                    _buildMenuGrid([
+                    _buildMenuGrid(context, [
                       _MenuItem(
-                        label: 'Promotion &\nDiscount',
-                        icon: Icons.local_offer_rounded,
-                        color: const Color(0xFFE91E63),
-                        bgColor: const Color(0xFFFCE4EC),
+                        label: 'Categories',
+                        icon: Icons.category_rounded,
+                        color: const Color(0xFF3949AB),
+                        bgColor: const Color(0xFFE8EAF6),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const CategoryListScreen(),
+                          ),
+                        ),
                       ),
                       _MenuItem(
                         label: 'Supplier\nManagement',
                         icon: Icons.local_shipping_rounded,
                         color: const Color(0xFF795548),
                         bgColor: const Color(0xFFEFEBE9),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const SupplierListScreen(),
+                          ),
+                        ),
                       ),
                       _MenuItem(
                         label: 'Store\nProfile',
                         icon: Icons.store_rounded,
                         color: const Color(0xFF607D8B),
                         bgColor: const Color(0xFFECEFF1),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const StoreListScreen(),
+                          ),
+                        ),
                       ),
                       _MenuItem(
                         label: 'Notifications',
@@ -178,10 +216,7 @@ class ManagerMenuScreen extends StatelessWidget {
                 SizedBox(height: 2),
                 Text(
                   'Convenient Store Chain Management',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.white70, fontSize: 12),
                 ),
               ],
             ),
@@ -207,7 +242,7 @@ class ManagerMenuScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMenuGrid(List<_MenuItem> items) {
+  Widget _buildMenuGrid(BuildContext ctx, List<_MenuItem> items) {
     return GridView.count(
       crossAxisCount: 2,
       crossAxisSpacing: 12,
@@ -215,50 +250,69 @@ class ManagerMenuScreen extends StatelessWidget {
       childAspectRatio: 1.5,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      children: items.map((item) => _buildMenuCard(item)).toList(),
+      children: items.map((item) => _buildMenuCard(ctx, item)).toList(),
     );
   }
 
-  Widget _buildMenuCard(_MenuItem item) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
+  Widget _buildMenuCard(BuildContext ctx, _MenuItem item) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+        onTap: item.onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: item.bgColor,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(item.icon, color: item.color, size: 26),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                item.label,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF212121),
-                  height: 1.3,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: item.bgColor,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(item.icon, color: item.color, size: 26),
                 ),
-              ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.label,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF212121),
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                      if (item.onTap != null)
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 12,
+                          color: Colors.grey.shade400,
+                        ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -269,7 +323,11 @@ class ManagerMenuScreen extends StatelessWidget {
       decoration: const BoxDecoration(
         color: Colors.white,
         boxShadow: [
-          BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, -2)),
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 8,
+            offset: Offset(0, -2),
+          ),
         ],
       ),
       child: BottomNavigationBar(
@@ -280,9 +338,18 @@ class ManagerMenuScreen extends StatelessWidget {
         currentIndex: 0,
         type: BottomNavigationBarType.fixed,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_outline_rounded), label: 'Chat'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline_rounded), label: 'Profile'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_rounded),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat_bubble_outline_rounded),
+            label: 'Chat',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline_rounded),
+            label: 'Profile',
+          ),
         ],
       ),
     );
@@ -294,11 +361,13 @@ class _MenuItem {
   final IconData icon;
   final Color color;
   final Color bgColor;
+  final VoidCallback? onTap;
 
   const _MenuItem({
     required this.label,
     required this.icon,
     required this.color,
     required this.bgColor,
+    this.onTap,
   });
 }
