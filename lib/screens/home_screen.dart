@@ -5,7 +5,12 @@ import '../controllers/home_controller.dart';
 import 'login_screen.dart';
 import 'inventory_ops_screen.dart';
 import 'employee_admin_screen.dart';
+import 'employee_info_screen.dart';
 import 'revenue_report_screen.dart';
+import 'store_management_screen.dart';
+import 'category_management_screen.dart';
+import 'product_management_screen.dart';
+import 'supplier_management_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String username;
@@ -58,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen>
     if (widget.roleId == 1) {
       _modules.add(_DashboardModule(
         icon: Icons.people_alt_rounded,
-        label: 'Quản trị nhân sự',
+        label: 'Quản trị tài khoản',
         subtitle: 'Cấp & khóa tài khoản',
         color: const Color(0xFF3B82F6),
         bgGradient: const LinearGradient(colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)]),
@@ -67,11 +72,61 @@ class _HomeScreenState extends State<HomeScreen>
         )).then((_) => _loadStats()),
       ));
       _modules.add(_DashboardModule(
+        icon: Icons.store_mall_directory_rounded,
+        label: 'Quản lý Cửa hàng',
+        subtitle: 'Thêm, sửa, xóa store',
+        color: const Color(0xFF06B6D4),
+        bgGradient: const LinearGradient(colors: [Color(0xFF06B6D4), Color(0xFF0284C7)]),
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => const StoreManagementScreen(),
+        )).then((_) => _loadStats()),
+      ));
+      _modules.add(_DashboardModule(
+        icon: Icons.badge_rounded,
+        label: 'Thông tin Nhân viên',
+        subtitle: 'Xem & sửa hồ sơ',
+        color: const Color(0xFF3B82F6),
+        bgGradient: const LinearGradient(colors: [Color(0xFF6366F1), Color(0xFF4338CA)]),
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => const EmployeeInfoScreen(),
+        )),
+      ));
+      _modules.add(_DashboardModule(
+        icon: Icons.category_rounded,
+        label: 'Danh mục SP',
+        subtitle: 'Thêm, sửa danh mục',
+        color: const Color(0xFFF59E0B),
+        bgGradient: const LinearGradient(colors: [Color(0xFFF59E0B), Color(0xFFD97706)]),
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => const CategoryManagementScreen(),
+        )),
+      ));
+      _modules.add(_DashboardModule(
+        icon: Icons.inventory_2_rounded,
+        label: 'Danh sách SP',
+        subtitle: 'Quản lý sản phẩm',
+        color: const Color(0xFF10B981),
+        bgGradient: const LinearGradient(colors: [Color(0xFF10B981), Color(0xFF047857)]),
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => const ProductManagementScreen(),
+        )),
+      ));
+      _modules.add(_DashboardModule(
+        icon: Icons.local_shipping_rounded,
+        label: 'Nhà cung cấp',
+        subtitle: 'Quản lý đối tác',
+        color: const Color(0xFF8B5CF6),
+        bgGradient: const LinearGradient(colors: [Color(0xFF8B5CF6), Color(0xFF6D28D9)]),
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => const SupplierManagementScreen(),
+        )),
+      ));
+      _modules.add(_DashboardModule(
         icon: Icons.bar_chart_rounded,
         label: 'Báo cáo chuỗi',
         subtitle: 'Thống kê tổng hợp',
         color: const Color(0xFF8B5CF6),
-        bgGradient: const LinearGradient(colors: [Color(0xFF8B5CF6), Color(0xFF6D28D9)]),
+        bgGradient: const LinearGradient(colors: [Color(0xFFEC4899), Color(0xFF9D174D)]),
         onTap: () => Navigator.of(context).push(MaterialPageRoute(
           builder: (_) => RevenueReportScreen(roleId: 1),
         )),

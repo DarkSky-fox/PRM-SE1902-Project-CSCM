@@ -75,6 +75,8 @@ class DatabaseHelper {
         StoreName TEXT NOT NULL,
         Address TEXT,
         Phone TEXT,
+        OpenTime TEXT,
+        CloseTime TEXT,
         Status TEXT
       )
     ''');
@@ -245,11 +247,11 @@ class DatabaseHelper {
     await db.insert('Role', {'RoleName': 'Cửa hàng trưởng'});
     await db.insert('Role', {'RoleName': 'Nhân viên'});
 
-    // 4 Stores (2 cũ + 2 mới)
-    await db.insert('Store', {'StoreName': 'Store Quận 1', 'Address': '123 Nguyễn Huệ, Q.1', 'Phone': '02811112222', 'Status': 'Active'});
-    await db.insert('Store', {'StoreName': 'Store Quận 3', 'Address': '456 Điện Biên Phủ, Q.3', 'Phone': '02833334444', 'Status': 'Active'});
-    await db.insert('Store', {'StoreName': 'Store Bình Thạnh', 'Address': '789 Điện Biên Phủ, Bình Thạnh', 'Phone': '02855556666', 'Status': 'Active'});
-    await db.insert('Store', {'StoreName': 'Store Phú Nhuận', 'Address': '101 Phan Xích Long, Phú Nhuận', 'Phone': '02877778888', 'Status': 'Active'});
+    // 4 Stores
+    await db.insert('Store', {'StoreName': 'Store Quận 1', 'Address': '123 Nguyễn Huệ, Q.1', 'Phone': '02811112222', 'OpenTime': '07:00', 'CloseTime': '22:00', 'Status': 'Active'});
+    await db.insert('Store', {'StoreName': 'Store Quận 3', 'Address': '456 Điện Biên Phủ, Q.3', 'Phone': '02833334444', 'OpenTime': '07:00', 'CloseTime': '22:00', 'Status': 'Active'});
+    await db.insert('Store', {'StoreName': 'Store Bình Thạnh', 'Address': '789 Điện Biên Phủ, Bình Thạnh', 'Phone': '02855556666', 'OpenTime': '06:30', 'CloseTime': '23:00', 'Status': 'Active'});
+    await db.insert('Store', {'StoreName': 'Store Phú Nhuận', 'Address': '101 Phan Xích Long, Phú Nhuận', 'Phone': '02877778888', 'OpenTime': '06:30', 'CloseTime': '23:00', 'Status': 'Active'});
 
     // Supplier
     await db.insert('Supplier', {'SupplierName': 'Nhà Cung Cấp Tổng Hợp', 'Address': '789 Bình Thạnh', 'Email': 'supplier@cscm.com', 'Phone': '0909999888'});
@@ -764,6 +766,329 @@ class DatabaseHelper {
 
   Future<List<Map<String, dynamic>>> getStoresList() async {
     final db = await database;
-    return await db.query('Store');
+    return await db.query('Store', orderBy: 'StoreID ASC');
+  }
+
+  // ── STORE CRUD ─────────────────────────────────────────────────────────────
+
+  Future<int> insertStore({
+    required String storeName,
+    String? address,
+    String? phone,
+    String? openTime,
+    String? closeTime,
+    String status = 'Active',
+  }) async {
+    final db = await database;
+    return await db.insert('Store', {
+      'StoreName': storeName,
+      'Address': address,
+      'Phone': phone,
+      'OpenTime': openTime,
+      'CloseTime': closeTime,
+      'Status': status,
+    });
+  }
+
+  Future<int> updateStore({
+    required int storeId,
+    required String storeName,
+    String? address,
+    String? phone,
+    String? openTime,
+    String? closeTime,
+    String? status,
+  }) async {
+    final db = await database;
+    return await db.update(
+      'Store',
+      {
+        'StoreName': storeName,
+        'Address': address,
+        'Phone': phone,
+        'OpenTime': openTime,
+        'CloseTime': closeTime,
+        'Status': status,
+      },
+      where: 'StoreID = ?',
+      whereArgs: [storeId],
+    );
+  }
+
+  /// Returns -1 if store still has employees, -2 if has inventory, else rows deleted
+  Future<int> deleteStore(int storeId) async {
+    final db = await database;
+    final empCheck = await db.query('Employee',
+        where: 'StoreID = ?', whereArgs: [storeId], limit: 1);
+    if (empCheck.isNotEmpty) return -1;
+    final invCheck = await db.query('Inventory',
+        where: 'StoreID = ? AND Quantity > 0', whereArgs: [storeId], limit: 1);
+    if (invCheck.isNotEmpty) return -2;
+    return await db.delete('Store', where: 'StoreID = ?', whereArgs: [storeId]);
+  }
+
+  Future<List<Map<String, dynamic>>> getStoresWithEmployeeCount() async {
+    final db = await database;
+    return await db.rawQuery('''
+      SELECT s.StoreID, s.StoreName, s.Address, s.Phone,
+             s.OpenTime, s.CloseTime, s.Status,
+             COUNT(e.EmployeeID) AS EmployeeCount
+      FROM Store s
+      LEFT JOIN Employee e ON s.StoreID = e.StoreID
+      GROUP BY s.StoreID
+      ORDER BY s.StoreID ASC
+    ''');
+  }
+
+  Future<int> toggleStoreStatus(int storeId, String currentStatus) async {
+    final db = await database;
+    final newStatus = currentStatus == 'Active' ? 'Inactive' : 'Active';
+    return await db.update(
+      'Store',
+      {'Status': newStatus},
+      where: 'StoreID = ?',
+      whereArgs: [storeId],
+    );
+  }
+
+  // ── EMPLOYEE DETAIL CRUD ───────────────────────────────────────────────────
+
+  Future<Map<String, dynamic>?> getEmployeeById(int employeeId) async {
+    final db = await database;
+    final res = await db.rawQuery('''
+      SELECT e.*, a.Username, a.RoleID, a.Status AS AccountStatus, r.RoleName, s.StoreName
+      FROM Employee e
+      LEFT JOIN Account a ON e.AccountID = a.AccountID
+      LEFT JOIN Role r ON a.RoleID = r.RoleID
+      LEFT JOIN Store s ON e.StoreID = s.StoreID
+      WHERE e.EmployeeID = ?
+    ''', [employeeId]);
+    return res.isNotEmpty ? res.first : null;
+  }
+
+  Future<int> updateEmployeeDetail({
+    required int employeeId,
+    required String fullName,
+    String? dob,
+    int? gender,
+    String? address,
+    String? phone,
+    double? salary,
+    int? storeId,
+  }) async {
+    final db = await database;
+    return await db.update(
+      'Employee',
+      {
+        'FullName': fullName,
+        'DOB': dob,
+        'Gender': gender,
+        'Address': address,
+        'Phone': phone,
+        'Salary': salary,
+        'StoreID': storeId,
+      },
+      where: 'EmployeeID = ?',
+      whereArgs: [employeeId],
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getEmployeesWithDetail({
+    int? storeId,
+    int? roleId,
+  }) async {
+    final db = await database;
+    String where = '';
+    List<dynamic> args = [];
+    if (storeId != null && roleId != null) {
+      where = 'WHERE e.StoreID = ? AND a.RoleID = ?';
+      args = [storeId, roleId];
+    } else if (storeId != null) {
+      where = 'WHERE e.StoreID = ?';
+      args = [storeId];
+    } else if (roleId != null) {
+      where = 'WHERE a.RoleID = ?';
+      args = [roleId];
+    }
+    return await db.rawQuery('''
+      SELECT e.EmployeeID, e.FullName, e.DOB, e.Gender, e.Address, e.Phone, e.Salary,
+             e.StoreID, e.AccountID, a.Username, a.RoleID, a.Status AS AccountStatus,
+             r.RoleName, s.StoreName
+      FROM Employee e
+      LEFT JOIN Account a ON e.AccountID = a.AccountID
+      LEFT JOIN Role r ON a.RoleID = r.RoleID
+      LEFT JOIN Store s ON e.StoreID = s.StoreID
+      $where
+      ORDER BY e.EmployeeID ASC
+    ''', args);
+  }
+
+  // ── CATEGORY CRUD ──────────────────────────────────────────────────────────
+
+  Future<List<Map<String, dynamic>>> getCategoriesList() async {
+    final db = await database;
+    return await db.rawQuery('''
+      SELECT c.CategoryID, c.CategoryName, COUNT(p.ProductID) AS ProductCount
+      FROM Category c
+      LEFT JOIN Product p ON c.CategoryID = p.CategoryID
+      GROUP BY c.CategoryID
+      ORDER BY c.CategoryID ASC
+    ''');
+  }
+
+  Future<int> insertCategory(String categoryName) async {
+    final db = await database;
+    return await db.insert('Category', {'CategoryName': categoryName});
+  }
+
+  Future<int> updateCategory(int categoryId, String categoryName) async {
+    final db = await database;
+    return await db.update(
+      'Category',
+      {'CategoryName': categoryName},
+      where: 'CategoryID = ?',
+      whereArgs: [categoryId],
+    );
+  }
+
+  /// Returns -1 if category still has products, else rows deleted
+  Future<int> deleteCategory(int categoryId) async {
+    final db = await database;
+    final check = await db.query('Product',
+        where: 'CategoryID = ?', whereArgs: [categoryId], limit: 1);
+    if (check.isNotEmpty) return -1;
+    return await db.delete('Category',
+        where: 'CategoryID = ?', whereArgs: [categoryId]);
+  }
+
+  // ── PRODUCT CRUD ───────────────────────────────────────────────────────────
+
+  Future<List<Map<String, dynamic>>> getProductsWithDetail({
+    int? categoryId,
+  }) async {
+    final db = await database;
+    final where = categoryId != null ? 'WHERE p.CategoryID = ?' : '';
+    final args = categoryId != null ? [categoryId] : <dynamic>[];
+    return await db.rawQuery('''
+      SELECT p.ProductID, p.ProductName, p.Description, p.ImageUrl,
+             p.CategoryID, c.CategoryName,
+             p.SupplierID, s.SupplierName
+      FROM Product p
+      LEFT JOIN Category c ON p.CategoryID = c.CategoryID
+      LEFT JOIN Supplier s ON p.SupplierID = s.SupplierID
+      $where
+      ORDER BY p.ProductID ASC
+    ''', args);
+  }
+
+  Future<int> insertProduct({
+    required String productName,
+    int? categoryId,
+    int? supplierId,
+    String? description,
+    String? imageUrl,
+  }) async {
+    final db = await database;
+    return await db.insert('Product', {
+      'ProductName': productName,
+      'CategoryID': categoryId,
+      'SupplierID': supplierId,
+      'Description': description,
+      'ImageUrl': imageUrl,
+    });
+  }
+
+  Future<int> updateProduct({
+    required int productId,
+    required String productName,
+    int? categoryId,
+    int? supplierId,
+    String? description,
+    String? imageUrl,
+  }) async {
+    final db = await database;
+    return await db.update(
+      'Product',
+      {
+        'ProductName': productName,
+        'CategoryID': categoryId,
+        'SupplierID': supplierId,
+        'Description': description,
+        'ImageUrl': imageUrl,
+      },
+      where: 'ProductID = ?',
+      whereArgs: [productId],
+    );
+  }
+
+  /// Returns -1 if any store still has Quantity > 0, else rows deleted
+  Future<int> deleteProduct(int productId) async {
+    final db = await database;
+    final check = await db.rawQuery(
+        'SELECT 1 FROM Inventory WHERE ProductID = ? AND Quantity > 0 LIMIT 1',
+        [productId]);
+    if (check.isNotEmpty) return -1;
+    return await db
+        .delete('Product', where: 'ProductID = ?', whereArgs: [productId]);
+  }
+
+  // ── SUPPLIER CRUD ──────────────────────────────────────────────────────────
+
+  Future<List<Map<String, dynamic>>> getSuppliersList() async {
+    final db = await database;
+    return await db.rawQuery('''
+      SELECT s.SupplierID, s.SupplierName, s.Address, s.Email, s.Phone,
+             COUNT(p.ProductID) AS ProductCount
+      FROM Supplier s
+      LEFT JOIN Product p ON s.SupplierID = p.SupplierID
+      GROUP BY s.SupplierID
+      ORDER BY s.SupplierID ASC
+    ''');
+  }
+
+  Future<int> insertSupplier({
+    required String supplierName,
+    String? address,
+    String? email,
+    String? phone,
+  }) async {
+    final db = await database;
+    return await db.insert('Supplier', {
+      'SupplierName': supplierName,
+      'Address': address,
+      'Email': email,
+      'Phone': phone,
+    });
+  }
+
+  Future<int> updateSupplier({
+    required int supplierId,
+    required String supplierName,
+    String? address,
+    String? email,
+    String? phone,
+  }) async {
+    final db = await database;
+    return await db.update(
+      'Supplier',
+      {
+        'SupplierName': supplierName,
+        'Address': address,
+        'Email': email,
+        'Phone': phone,
+      },
+      where: 'SupplierID = ?',
+      whereArgs: [supplierId],
+    );
+  }
+
+  /// Returns -1 if supplier still has products linked, else rows deleted
+  Future<int> deleteSupplier(int supplierId) async {
+    final db = await database;
+    final check = await db.query('Product',
+        where: 'SupplierID = ?', whereArgs: [supplierId], limit: 1);
+    if (check.isNotEmpty) return -1;
+    return await db.delete('Supplier',
+        where: 'SupplierID = ?', whereArgs: [supplierId]);
   }
 }
