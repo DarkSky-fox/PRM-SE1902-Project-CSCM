@@ -19,7 +19,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 3,
+      version: 10,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -248,20 +248,63 @@ class DatabaseHelper {
     await db.insert('Role', {'RoleName': 'Nhân viên'});
 
     // 4 Stores
-    await db.insert('Store', {'StoreName': 'Store Quận 1', 'Address': '123 Nguyễn Huệ, Q.1', 'Phone': '02811112222', 'OpenTime': '07:00', 'CloseTime': '22:00', 'Status': 'Active'});
-    await db.insert('Store', {'StoreName': 'Store Quận 3', 'Address': '456 Điện Biên Phủ, Q.3', 'Phone': '02833334444', 'OpenTime': '07:00', 'CloseTime': '22:00', 'Status': 'Active'});
-    await db.insert('Store', {'StoreName': 'Store Bình Thạnh', 'Address': '789 Điện Biên Phủ, Bình Thạnh', 'Phone': '02855556666', 'OpenTime': '06:30', 'CloseTime': '23:00', 'Status': 'Active'});
-    await db.insert('Store', {'StoreName': 'Store Phú Nhuận', 'Address': '101 Phan Xích Long, Phú Nhuận', 'Phone': '02877778888', 'OpenTime': '06:30', 'CloseTime': '23:00', 'Status': 'Active'});
+    await db.insert('Store', {
+      'StoreName': 'Store Quận 1',
+      'Address': '123 Nguyễn Huệ, Q.1',
+      'Phone': '02811112222',
+      'OpenTime': '07:00',
+      'CloseTime': '22:00',
+      'Status': 'Active',
+    });
+    await db.insert('Store', {
+      'StoreName': 'Store Quận 3',
+      'Address': '456 Điện Biên Phủ, Q.3',
+      'Phone': '02833334444',
+      'OpenTime': '07:00',
+      'CloseTime': '22:00',
+      'Status': 'Active',
+    });
+    await db.insert('Store', {
+      'StoreName': 'Store Bình Thạnh',
+      'Address': '789 Điện Biên Phủ, Bình Thạnh',
+      'Phone': '02855556666',
+      'OpenTime': '06:30',
+      'CloseTime': '23:00',
+      'Status': 'Active',
+    });
+    await db.insert('Store', {
+      'StoreName': 'Store Phú Nhuận',
+      'Address': '101 Phan Xích Long, Phú Nhuận',
+      'Phone': '02877778888',
+      'OpenTime': '06:30',
+      'CloseTime': '23:00',
+      'Status': 'Active',
+    });
 
     // Supplier
-    await db.insert('Supplier', {'SupplierName': 'Nhà Cung Cấp Tổng Hợp', 'Address': '789 Bình Thạnh', 'Email': 'supplier@cscm.com', 'Phone': '0909999888'});
+    await db.insert('Supplier', {
+      'SupplierName': 'Nhà Cung Cấp Tổng Hợp',
+      'Address': '789 Bình Thạnh',
+      'Email': 'supplier@cscm.com',
+      'Phone': '0909999888',
+    });
 
     // Customers
-    await db.insert('Customer', {'FullName': 'Khách Vãng Lai', 'Phone': '0000000000', 'Email': 'guest@cscm.com'});
+    await db.insert('Customer', {
+      'FullName': 'Khách Vãng Lai',
+      'Phone': '0000000000',
+      'Email': 'guest@cscm.com',
+    });
 
     // Promotions
-    await db.insert('Promotion', {'PromotionName': 'Không giảm giá', 'DiscountPercent': 0.0});
-    await db.insert('Promotion', {'PromotionName': 'Giảm giá 10%', 'DiscountPercent': 10.0});
+    await db.insert('Promotion', {
+      'PromotionName': 'Không giảm giá',
+      'DiscountPercent': 0.0,
+    });
+    await db.insert('Promotion', {
+      'PromotionName': 'Giảm giá 10%',
+      'DiscountPercent': 10.0,
+    });
 
     // 4 Categories
     await db.insert('Category', {'CategoryName': 'Đồ uống'});
@@ -271,48 +314,312 @@ class DatabaseHelper {
 
     // Define 33 products (3 existing + 30 new)
     final List<Map<String, dynamic>> productData = [
-      {'ProductName': 'Cà phê sữa đá', 'CategoryID': 1, 'SupplierID': 1, 'Description': 'Cà phê sữa truyền thống', 'ImageUrl': 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=300', 'SalePrice': 25000.0},
-      {'ProductName': 'Trà đào sả', 'CategoryID': 1, 'SupplierID': 1, 'Description': 'Trà đào thơm mát', 'ImageUrl': 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=300', 'SalePrice': 30000.0},
-      {'ProductName': 'Bánh mì pate', 'CategoryID': 2, 'SupplierID': 1, 'Description': 'Bánh mì thịt pate nóng giòn', 'ImageUrl': 'https://images.unsplash.com/photo-1626132647523-66f5bf380027?w=300', 'SalePrice': 20000.0},
-      
+      {
+        'ProductName': 'Cà phê sữa đá',
+        'CategoryID': 1,
+        'SupplierID': 1,
+        'Description': 'Cà phê sữa truyền thống',
+        'ImageUrl':
+            'https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=300',
+        'SalePrice': 25000.0,
+      },
+      {
+        'ProductName': 'Trà đào sả',
+        'CategoryID': 1,
+        'SupplierID': 1,
+        'Description': 'Trà đào thơm mát',
+        'ImageUrl':
+            'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=300',
+        'SalePrice': 30000.0,
+      },
+      {
+        'ProductName': 'Bánh mì pate',
+        'CategoryID': 2,
+        'SupplierID': 1,
+        'Description': 'Bánh mì thịt pate nóng giòn',
+        'ImageUrl':
+            'https://images.unsplash.com/photo-1626132647523-66f5bf380027?w=300',
+        'SalePrice': 20000.0,
+      },
+
       // 30 mặt hàng mới
       // Đồ uống (CategoryID 1)
-      {'ProductName': 'Pepsi lon 320ml', 'CategoryID': 1, 'SupplierID': 1, 'Description': 'Pepsi giải khát sảng khoái', 'ImageUrl': 'https://images.unsplash.com/photo-1629203851122-3726ecdf080e?w=300', 'SalePrice': 12000.0},
-      {'ProductName': 'Coca-Cola lon 320ml', 'CategoryID': 1, 'SupplierID': 1, 'Description': 'Coca-Cola hương vị nguyên bản', 'ImageUrl': 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=300', 'SalePrice': 12000.0},
-      {'ProductName': 'Nước suối Aquafina 500ml', 'CategoryID': 1, 'SupplierID': 1, 'Description': 'Nước uống tinh khiết', 'ImageUrl': 'https://images.unsplash.com/photo-1616169776580-c810d1d9ec34?w=300', 'SalePrice': 6000.0},
-      {'ProductName': 'Sữa tươi Vinamilk ít đường', 'CategoryID': 1, 'SupplierID': 1, 'Description': 'Sữa tươi sạch 180ml', 'ImageUrl': 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=300', 'SalePrice': 9000.0},
-      {'ProductName': 'Trà sữa truyền thống', 'CategoryID': 1, 'SupplierID': 1, 'Description': 'Trà sữa thơm béo kèm trân châu', 'ImageUrl': 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=300', 'SalePrice': 35000.0},
-      {'ProductName': 'Sinh tố bơ sáp', 'CategoryID': 1, 'SupplierID': 1, 'Description': 'Sinh tố bơ béo ngậy hạt chia', 'ImageUrl': 'https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=300', 'SalePrice': 40000.0},
-      {'ProductName': 'Nước cam ép nguyên chất', 'CategoryID': 1, 'SupplierID': 1, 'Description': 'Cam sành ép giàu vitamin C', 'ImageUrl': 'https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=300', 'SalePrice': 28000.0},
-      {'ProductName': 'Trà xanh Oolong C2', 'CategoryID': 1, 'SupplierID': 1, 'Description': 'Trà xanh thanh mát cơ thể', 'ImageUrl': 'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=300', 'SalePrice': 10000.0},
-      
+      {
+        'ProductName': 'Pepsi lon 320ml',
+        'CategoryID': 1,
+        'SupplierID': 1,
+        'Description': 'Pepsi giải khát sảng khoái',
+        'ImageUrl':
+            'https://images.unsplash.com/photo-1629203851122-3726ecdf080e?w=300',
+        'SalePrice': 12000.0,
+      },
+      {
+        'ProductName': 'Coca-Cola lon 320ml',
+        'CategoryID': 1,
+        'SupplierID': 1,
+        'Description': 'Coca-Cola hương vị nguyên bản',
+        'ImageUrl':
+            'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=300',
+        'SalePrice': 12000.0,
+      },
+      {
+        'ProductName': 'Nước suối Aquafina 500ml',
+        'CategoryID': 1,
+        'SupplierID': 1,
+        'Description': 'Nước uống tinh khiết',
+        'ImageUrl':
+            'https://images.unsplash.com/photo-1616169776580-c810d1d9ec34?w=300',
+        'SalePrice': 6000.0,
+      },
+      {
+        'ProductName': 'Sữa tươi Vinamilk ít đường',
+        'CategoryID': 1,
+        'SupplierID': 1,
+        'Description': 'Sữa tươi sạch 180ml',
+        'ImageUrl':
+            'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=300',
+        'SalePrice': 9000.0,
+      },
+      {
+        'ProductName': 'Trà sữa truyền thống',
+        'CategoryID': 1,
+        'SupplierID': 1,
+        'Description': 'Trà sữa thơm béo kèm trân châu',
+        'ImageUrl':
+            'https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=300',
+        'SalePrice': 35000.0,
+      },
+      {
+        'ProductName': 'Sinh tố bơ sáp',
+        'CategoryID': 1,
+        'SupplierID': 1,
+        'Description': 'Sinh tố bơ béo ngậy hạt chia',
+        'ImageUrl':
+            'https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=300',
+        'SalePrice': 40000.0,
+      },
+      {
+        'ProductName': 'Nước cam ép nguyên chất',
+        'CategoryID': 1,
+        'SupplierID': 1,
+        'Description': 'Cam sành ép giàu vitamin C',
+        'ImageUrl':
+            'https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=300',
+        'SalePrice': 28000.0,
+      },
+      {
+        'ProductName': 'Trà xanh Oolong C2',
+        'CategoryID': 1,
+        'SupplierID': 1,
+        'Description': 'Trà xanh thanh mát cơ thể',
+        'ImageUrl':
+            'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=300',
+        'SalePrice': 10000.0,
+      },
+
       // Đồ ăn nhanh (CategoryID 2)
-      {'ProductName': 'Bánh bao trứng cút', 'CategoryID': 2, 'SupplierID': 1, 'Description': 'Bánh bao nhân thịt nóng hổi', 'ImageUrl': 'https://images.unsplash.com/photo-1614961909013-1e2212a2ca87?w=300', 'SalePrice': 18000.0},
-      {'ProductName': 'Hotdog phô mai kéo sợi', 'CategoryID': 2, 'SupplierID': 1, 'Description': 'Hotdog xúc xích Hàn Quốc', 'ImageUrl': 'https://images.unsplash.com/photo-1619740455993-9e612b1af08a?w=300', 'SalePrice': 22000.0},
-      {'ProductName': 'Pizza hải sản mini', 'CategoryID': 2, 'SupplierID': 1, 'Description': 'Pizza hải sản phô mai xốt cay', 'ImageUrl': 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300', 'SalePrice': 35000.0},
-      {'ProductName': 'Hamburger bò phô mai', 'CategoryID': 2, 'SupplierID': 1, 'Description': 'Hamburger bò Mỹ nướng chín tới', 'ImageUrl': 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300', 'SalePrice': 38000.0},
-      {'ProductName': 'Xôi mặn chà bông lạp xưởng', 'CategoryID': 2, 'SupplierID': 1, 'Description': 'Xôi nếp dẻo thơm ngon', 'ImageUrl': 'https://images.unsplash.com/photo-1612838320302-4b3b49afec1c?w=300', 'SalePrice': 15000.0},
-      {'ProductName': 'Sandwich tam giác cá ngừ', 'CategoryID': 2, 'SupplierID': 1, 'Description': 'Sandwich cá ngừ sốt mayo', 'ImageUrl': 'https://images.unsplash.com/photo-1539252554453-80ab65ce3586?w=300', 'SalePrice': 20000.0},
-      {'ProductName': 'Kimbap truyền thống', 'CategoryID': 2, 'SupplierID': 1, 'Description': 'Cơm cuộn rong biển Hàn Quốc', 'ImageUrl': 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=300', 'SalePrice': 28000.0},
-      
+      {
+        'ProductName': 'Bánh bao trứng cút',
+        'CategoryID': 2,
+        'SupplierID': 1,
+        'Description': 'Bánh bao nhân thịt nóng hổi',
+        'ImageUrl':
+            'https://images.unsplash.com/photo-1614961909013-1e2212a2ca87?w=300',
+        'SalePrice': 18000.0,
+      },
+      {
+        'ProductName': 'Hotdog phô mai kéo sợi',
+        'CategoryID': 2,
+        'SupplierID': 1,
+        'Description': 'Hotdog xúc xích Hàn Quốc',
+        'ImageUrl':
+            'https://images.unsplash.com/photo-1619740455993-9e612b1af08a?w=300',
+        'SalePrice': 22000.0,
+      },
+      {
+        'ProductName': 'Pizza hải sản mini',
+        'CategoryID': 2,
+        'SupplierID': 1,
+        'Description': 'Pizza hải sản phô mai xốt cay',
+        'ImageUrl':
+            'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300',
+        'SalePrice': 35000.0,
+      },
+      {
+        'ProductName': 'Hamburger bò phô mai',
+        'CategoryID': 2,
+        'SupplierID': 1,
+        'Description': 'Hamburger bò Mỹ nướng chín tới',
+        'ImageUrl':
+            'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300',
+        'SalePrice': 38000.0,
+      },
+      {
+        'ProductName': 'Xôi mặn chà bông lạp xưởng',
+        'CategoryID': 2,
+        'SupplierID': 1,
+        'Description': 'Xôi nếp dẻo thơm ngon',
+        'ImageUrl':
+            'https://images.unsplash.com/photo-1612838320302-4b3b49afec1c?w=300',
+        'SalePrice': 15000.0,
+      },
+      {
+        'ProductName': 'Sandwich tam giác cá ngừ',
+        'CategoryID': 2,
+        'SupplierID': 1,
+        'Description': 'Sandwich cá ngừ sốt mayo',
+        'ImageUrl':
+            'https://images.unsplash.com/photo-1539252554453-80ab65ce3586?w=300',
+        'SalePrice': 20000.0,
+      },
+      {
+        'ProductName': 'Kimbap truyền thống',
+        'CategoryID': 2,
+        'SupplierID': 1,
+        'Description': 'Cơm cuộn rong biển Hàn Quốc',
+        'ImageUrl':
+            'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=300',
+        'SalePrice': 28000.0,
+      },
+
       // Snack & Bánh kẹo (CategoryID 3)
-      {'ProductName': 'Khoai tây chiên Lays', 'CategoryID': 3, 'SupplierID': 1, 'Description': 'Snack khoai tây vị tự nhiên', 'ImageUrl': 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=300', 'SalePrice': 16000.0},
-      {'ProductName': 'Snack bắp ngọt Oishi', 'CategoryID': 3, 'SupplierID': 1, 'Description': 'Snack vị bắp sữa ngọt ngào', 'ImageUrl': 'https://images.unsplash.com/photo-1599490659223-93a95178e70a?w=300', 'SalePrice': 7000.0},
-      {'ProductName': 'Bánh Choco-Pie hộp 2 cái', 'CategoryID': 3, 'SupplierID': 1, 'Description': 'Bánh kem marshmallow socola', 'ImageUrl': 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=300', 'SalePrice': 12000.0},
-      {'ProductName': 'Kẹo dẻo Haribo Bears', 'CategoryID': 3, 'SupplierID': 1, 'Description': 'Kẹo dẻo hương trái cây Đức', 'ImageUrl': 'https://images.unsplash.com/photo-1581798459219-318e76aecc7b?w=300', 'SalePrice': 22000.0},
-      {'ProductName': 'Hạt điều rang muối 100g', 'CategoryID': 3, 'SupplierID': 1, 'Description': 'Hạt điều Bình Phước giòn bùi', 'ImageUrl': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=300', 'SalePrice': 45000.0},
-      {'ProductName': 'Bánh quy bơ Danisa 200g', 'CategoryID': 3, 'SupplierID': 1, 'Description': 'Bánh quy bơ Đan Mạch thượng hạng', 'ImageUrl': 'https://images.unsplash.com/photo-1558961317-5f241202db27?w=300', 'SalePrice': 55000.0},
-      {'ProductName': 'Socola KitKat 4 thanh', 'CategoryID': 3, 'SupplierID': 1, 'Description': 'Bánh xốp phủ socola ngọt ngào', 'ImageUrl': 'https://images.unsplash.com/photo-1549007994-cb92ca8a4a77?w=300', 'SalePrice': 15000.0},
-      
+      {
+        'ProductName': 'Khoai tây chiên Lays',
+        'CategoryID': 3,
+        'SupplierID': 1,
+        'Description': 'Snack khoai tây vị tự nhiên',
+        'ImageUrl':
+            'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=300',
+        'SalePrice': 16000.0,
+      },
+      {
+        'ProductName': 'Snack bắp ngọt Oishi',
+        'CategoryID': 3,
+        'SupplierID': 1,
+        'Description': 'Snack vị bắp sữa ngọt ngào',
+        'ImageUrl':
+            'https://images.unsplash.com/photo-1599490659223-93a95178e70a?w=300',
+        'SalePrice': 7000.0,
+      },
+      {
+        'ProductName': 'Bánh Choco-Pie hộp 2 cái',
+        'CategoryID': 3,
+        'SupplierID': 1,
+        'Description': 'Bánh kem marshmallow socola',
+        'ImageUrl':
+            'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=300',
+        'SalePrice': 12000.0,
+      },
+      {
+        'ProductName': 'Kẹo dẻo Haribo Bears',
+        'CategoryID': 3,
+        'SupplierID': 1,
+        'Description': 'Kẹo dẻo hương trái cây Đức',
+        'ImageUrl':
+            'https://images.unsplash.com/photo-1581798459219-318e76aecc7b?w=300',
+        'SalePrice': 22000.0,
+      },
+      {
+        'ProductName': 'Hạt điều rang muối 100g',
+        'CategoryID': 3,
+        'SupplierID': 1,
+        'Description': 'Hạt điều Bình Phước giòn bùi',
+        'ImageUrl':
+            'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=300',
+        'SalePrice': 45000.0,
+      },
+      {
+        'ProductName': 'Bánh quy bơ Danisa 200g',
+        'CategoryID': 3,
+        'SupplierID': 1,
+        'Description': 'Bánh quy bơ Đan Mạch thượng hạng',
+        'ImageUrl':
+            'https://images.unsplash.com/photo-1558961317-5f241202db27?w=300',
+        'SalePrice': 55000.0,
+      },
+      {
+        'ProductName': 'Socola KitKat 4 thanh',
+        'CategoryID': 3,
+        'SupplierID': 1,
+        'Description': 'Bánh xốp phủ socola ngọt ngào',
+        'ImageUrl':
+            'https://images.unsplash.com/photo-1549007994-cb92ca8a4a77?w=300',
+        'SalePrice': 15000.0,
+      },
+
       // Nhu yếu phẩm (CategoryID 4)
-      {'ProductName': 'Khăn giấy Paseo bỏ túi', 'CategoryID': 4, 'SupplierID': 1, 'Description': 'Khăn giấy lụa Paseo 3 lớp', 'ImageUrl': 'https://images.unsplash.com/photo-1603513492128-ba7bc9bca20f?w=300', 'SalePrice': 6000.0},
-      {'ProductName': 'Bàn chải Colgate mềm', 'CategoryID': 4, 'SupplierID': 1, 'Description': 'Bàn chải đánh răng Colgate lông tơ', 'ImageUrl': 'https://images.unsplash.com/photo-1559592442-741e2b41cd0b?w=300', 'SalePrice': 18000.0},
-      {'ProductName': 'Kem đánh răng Closeup', 'CategoryID': 4, 'SupplierID': 1, 'Description': 'Closeup bạc hà thơm mát 180g', 'ImageUrl': 'https://images.unsplash.com/photo-1559592442-741e2b41cd0b?w=300', 'SalePrice': 38000.0},
-      {'ProductName': 'Dầu gội Clear gói tiện lợi', 'CategoryID': 4, 'SupplierID': 1, 'Description': 'Dầu gội Clear sạch gàu mát lạnh', 'ImageUrl': 'https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?w=300', 'SalePrice': 2000.0},
-      {'ProductName': 'Nước rửa tay Lifebuoy', 'CategoryID': 4, 'SupplierID': 1, 'Description': 'Lifebuoy bảo vệ vượt trội 10 200ml', 'ImageUrl': 'https://images.unsplash.com/photo-1604762524889-3e2fcc145683?w=300', 'SalePrice': 40000.0},
-      {'ProductName': 'Sữa tắm Tây Thi dưỡng da', 'CategoryID': 4, 'SupplierID': 1, 'Description': 'Sữa tắm dược liệu Tây Thi 200ml', 'ImageUrl': 'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?w=300', 'SalePrice': 50000.0},
-      {'ProductName': 'Mì ly Hảo Hảo chua cay', 'CategoryID': 4, 'SupplierID': 1, 'Description': 'Mì ly hương vị tôm chua cay tiện lợi', 'ImageUrl': 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=300', 'SalePrice': 10000.0},
-      {'ProductName': 'Băng cá nhân Urgo hộp 20', 'CategoryID': 4, 'SupplierID': 1, 'Description': 'Urgo độ bám dính cao bảo vệ vết thương', 'ImageUrl': 'https://images.unsplash.com/photo-1603398938378-e54eab446dde?w=300', 'SalePrice': 25000.0},
+      {
+        'ProductName': 'Khăn giấy Paseo bỏ túi',
+        'CategoryID': 4,
+        'SupplierID': 1,
+        'Description': 'Khăn giấy lụa Paseo 3 lớp',
+        'ImageUrl':
+            'https://images.unsplash.com/photo-1603513492128-ba7bc9bca20f?w=300',
+        'SalePrice': 6000.0,
+      },
+      {
+        'ProductName': 'Bàn chải Colgate mềm',
+        'CategoryID': 4,
+        'SupplierID': 1,
+        'Description': 'Bàn chải đánh răng Colgate lông tơ',
+        'ImageUrl':
+            'https://images.unsplash.com/photo-1559592442-741e2b41cd0b?w=300',
+        'SalePrice': 18000.0,
+      },
+      {
+        'ProductName': 'Kem đánh răng Closeup',
+        'CategoryID': 4,
+        'SupplierID': 1,
+        'Description': 'Closeup bạc hà thơm mát 180g',
+        'ImageUrl':
+            'https://images.unsplash.com/photo-1559592442-741e2b41cd0b?w=300',
+        'SalePrice': 38000.0,
+      },
+      {
+        'ProductName': 'Dầu gội Clear gói tiện lợi',
+        'CategoryID': 4,
+        'SupplierID': 1,
+        'Description': 'Dầu gội Clear sạch gàu mát lạnh',
+        'ImageUrl':
+            'https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?w=300',
+        'SalePrice': 2000.0,
+      },
+      {
+        'ProductName': 'Nước rửa tay Lifebuoy',
+        'CategoryID': 4,
+        'SupplierID': 1,
+        'Description': 'Lifebuoy bảo vệ vượt trội 10 200ml',
+        'ImageUrl':
+            'https://images.unsplash.com/photo-1604762524889-3e2fcc145683?w=300',
+        'SalePrice': 40000.0,
+      },
+      {
+        'ProductName': 'Sữa tắm Tây Thi dưỡng da',
+        'CategoryID': 4,
+        'SupplierID': 1,
+        'Description': 'Sữa tắm dược liệu Tây Thi 200ml',
+        'ImageUrl':
+            'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?w=300',
+        'SalePrice': 50000.0,
+      },
+      {
+        'ProductName': 'Mì ly Hảo Hảo chua cay',
+        'CategoryID': 4,
+        'SupplierID': 1,
+        'Description': 'Mì ly hương vị tôm chua cay tiện lợi',
+        'ImageUrl':
+            'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=300',
+        'SalePrice': 10000.0,
+      },
+      {
+        'ProductName': 'Băng cá nhân Urgo hộp 20',
+        'CategoryID': 4,
+        'SupplierID': 1,
+        'Description': 'Urgo độ bám dính cao bảo vệ vết thương',
+        'ImageUrl':
+            'https://images.unsplash.com/photo-1603398938378-e54eab446dde?w=300',
+        'SalePrice': 25000.0,
+      },
     ];
 
     for (final p in productData) {
@@ -325,51 +632,195 @@ class DatabaseHelper {
       });
       // Seed Inventory cho cả 4 Store
       for (int storeId = 1; storeId <= 4; storeId++) {
-        final qty = storeId == 1 ? 120 : (storeId == 2 ? 80 : (storeId == 3 ? 70 : 60));
+        final qty = storeId == 1
+            ? 120
+            : (storeId == 2 ? 80 : (storeId == 3 ? 70 : 60));
         await db.insert('Inventory', {
           'StoreID': storeId,
           'ProductID': productId,
           'Quantity': qty,
           'SalePrice': p['SalePrice'],
-          'ExpiredDate': '2026-12-31'
+          'ExpiredDate': '2026-12-31',
         });
       }
     }
 
     // Seed Owner Account & Employee
-    await db.insert('Account', {'Username': 'admin', 'Password': '123456', 'RoleID': 1, 'Status': 1});
-    await db.insert('Employee', {'FullName': 'Nguyễn Văn A', 'DOB': '1985-05-15', 'Gender': 1, 'Phone': '090111222', 'Salary': 30000000.0, 'AccountID': 1});
+    await db.insert('Account', {
+      'Username': 'admin',
+      'Password': '123456',
+      'RoleID': 1,
+      'Status': 1,
+    });
+    await db.insert('Employee', {
+      'FullName': 'Nguyễn Văn A',
+      'DOB': '1985-05-15',
+      'Gender': 1,
+      'Phone': '090111222',
+      'Salary': 30000000.0,
+      'AccountID': 1,
+    });
 
     // Seed Manager Account & Employee (Store 1)
-    await db.insert('Account', {'Username': 'manager', 'Password': '123456', 'RoleID': 2, 'Status': 1});
-    await db.insert('Employee', {'FullName': 'Trần Thị B', 'DOB': '1990-10-20', 'Gender': 0, 'Phone': '0901234567', 'Salary': 15000000.0, 'StoreID': 1, 'AccountID': 2});
+    await db.insert('Account', {
+      'Username': 'manager',
+      'Password': '123456',
+      'RoleID': 2,
+      'Status': 1,
+    });
+    await db.insert('Employee', {
+      'FullName': 'Trần Thị B',
+      'DOB': '1990-10-20',
+      'Gender': 0,
+      'Phone': '0901234567',
+      'Salary': 15000000.0,
+      'StoreID': 1,
+      'AccountID': 2,
+    });
 
     // Seed Staff Account & Employee (Store 1)
-    await db.insert('Account', {'Username': 'staff', 'Password': '123456', 'RoleID': 3, 'Status': 1});
-    await db.insert('Employee', {'FullName': 'Lê Văn C', 'DOB': '1998-12-05', 'Gender': 1, 'Phone': '0907654321', 'Salary': 7000000.0, 'StoreID': 1, 'AccountID': 3});
+    await db.insert('Account', {
+      'Username': 'staff',
+      'Password': '123456',
+      'RoleID': 3,
+      'Status': 1,
+    });
+    await db.insert('Employee', {
+      'FullName': 'Lê Văn C',
+      'DOB': '1998-12-05',
+      'Gender': 1,
+      'Phone': '0907654321',
+      'Salary': 7000000.0,
+      'StoreID': 1,
+      'AccountID': 3,
+    });
 
     // --- SEED 8 NHÂN VIÊN MỚI TRÊN 2 CHI NHÁNH MỚI + CHI NHÁNH CŨ ---
     // Store 2 (Q3)
-    await db.insert('Account', {'Username': 'manager2', 'Password': '123456', 'RoleID': 2, 'Status': 1});
-    await db.insert('Employee', {'FullName': 'Phạm Văn D', 'DOB': '1991-04-12', 'Gender': 1, 'Phone': '090222333', 'Salary': 15000000.0, 'StoreID': 2, 'AccountID': 4});
-    await db.insert('Account', {'Username': 'staff2', 'Password': '123456', 'RoleID': 3, 'Status': 1});
-    await db.insert('Employee', {'FullName': 'Hoàng Thị E', 'DOB': '1999-07-21', 'Gender': 0, 'Phone': '090333444', 'Salary': 7000000.0, 'StoreID': 2, 'AccountID': 5});
-    await db.insert('Account', {'Username': 'staff3', 'Password': '123456', 'RoleID': 3, 'Status': 1});
-    await db.insert('Employee', {'FullName': 'Đỗ Văn F', 'DOB': '2000-01-15', 'Gender': 1, 'Phone': '090444555', 'Salary': 7000000.0, 'StoreID': 2, 'AccountID': 6});
+    await db.insert('Account', {
+      'Username': 'manager2',
+      'Password': '123456',
+      'RoleID': 2,
+      'Status': 1,
+    });
+    await db.insert('Employee', {
+      'FullName': 'Phạm Văn D',
+      'DOB': '1991-04-12',
+      'Gender': 1,
+      'Phone': '090222333',
+      'Salary': 15000000.0,
+      'StoreID': 2,
+      'AccountID': 4,
+    });
+    await db.insert('Account', {
+      'Username': 'staff2',
+      'Password': '123456',
+      'RoleID': 3,
+      'Status': 1,
+    });
+    await db.insert('Employee', {
+      'FullName': 'Hoàng Thị E',
+      'DOB': '1999-07-21',
+      'Gender': 0,
+      'Phone': '090333444',
+      'Salary': 7000000.0,
+      'StoreID': 2,
+      'AccountID': 5,
+    });
+    await db.insert('Account', {
+      'Username': 'staff3',
+      'Password': '123456',
+      'RoleID': 3,
+      'Status': 1,
+    });
+    await db.insert('Employee', {
+      'FullName': 'Đỗ Văn F',
+      'DOB': '2000-01-15',
+      'Gender': 1,
+      'Phone': '090444555',
+      'Salary': 7000000.0,
+      'StoreID': 2,
+      'AccountID': 6,
+    });
 
     // Store 3 (Bình Thạnh)
-    await db.insert('Account', {'Username': 'manager3', 'Password': '123456', 'RoleID': 2, 'Status': 1});
-    await db.insert('Employee', {'FullName': 'Bùi Thị G', 'DOB': '1992-09-08', 'Gender': 0, 'Phone': '090555666', 'Salary': 15000000.0, 'StoreID': 3, 'AccountID': 7});
-    await db.insert('Account', {'Username': 'staff4', 'Password': '123456', 'RoleID': 3, 'Status': 1});
-    await db.insert('Employee', {'FullName': 'Vũ Văn H', 'DOB': '1997-11-30', 'Gender': 1, 'Phone': '090666777', 'Salary': 7000000.0, 'StoreID': 3, 'AccountID': 8});
-    await db.insert('Account', {'Username': 'staff5', 'Password': '123456', 'RoleID': 3, 'Status': 1});
-    await db.insert('Employee', {'FullName': 'Ngô Thị I', 'DOB': '2001-05-18', 'Gender': 0, 'Phone': '090777888', 'Salary': 7000000.0, 'StoreID': 3, 'AccountID': 9});
+    await db.insert('Account', {
+      'Username': 'manager3',
+      'Password': '123456',
+      'RoleID': 2,
+      'Status': 1,
+    });
+    await db.insert('Employee', {
+      'FullName': 'Bùi Thị G',
+      'DOB': '1992-09-08',
+      'Gender': 0,
+      'Phone': '090555666',
+      'Salary': 15000000.0,
+      'StoreID': 3,
+      'AccountID': 7,
+    });
+    await db.insert('Account', {
+      'Username': 'staff4',
+      'Password': '123456',
+      'RoleID': 3,
+      'Status': 1,
+    });
+    await db.insert('Employee', {
+      'FullName': 'Vũ Văn H',
+      'DOB': '1997-11-30',
+      'Gender': 1,
+      'Phone': '090666777',
+      'Salary': 7000000.0,
+      'StoreID': 3,
+      'AccountID': 8,
+    });
+    await db.insert('Account', {
+      'Username': 'staff5',
+      'Password': '123456',
+      'RoleID': 3,
+      'Status': 1,
+    });
+    await db.insert('Employee', {
+      'FullName': 'Ngô Thị I',
+      'DOB': '2001-05-18',
+      'Gender': 0,
+      'Phone': '090777888',
+      'Salary': 7000000.0,
+      'StoreID': 3,
+      'AccountID': 9,
+    });
 
     // Store 4 (Phú Nhuận)
-    await db.insert('Account', {'Username': 'manager4', 'Password': '123456', 'RoleID': 2, 'Status': 1});
-    await db.insert('Employee', {'FullName': 'Lý Văn K', 'DOB': '1989-02-28', 'Gender': 1, 'Phone': '090888999', 'Salary': 16000000.0, 'StoreID': 4, 'AccountID': 10});
-    await db.insert('Account', {'Username': 'staff6', 'Password': '123456', 'RoleID': 3, 'Status': 1});
-    await db.insert('Employee', {'FullName': 'Dương Thị L', 'DOB': '2000-08-04', 'Gender': 0, 'Phone': '090999000', 'Salary': 7500000.0, 'StoreID': 4, 'AccountID': 11});
+    await db.insert('Account', {
+      'Username': 'manager4',
+      'Password': '123456',
+      'RoleID': 2,
+      'Status': 1,
+    });
+    await db.insert('Employee', {
+      'FullName': 'Lý Văn K',
+      'DOB': '1989-02-28',
+      'Gender': 1,
+      'Phone': '090888999',
+      'Salary': 16000000.0,
+      'StoreID': 4,
+      'AccountID': 10,
+    });
+    await db.insert('Account', {
+      'Username': 'staff6',
+      'Password': '123456',
+      'RoleID': 3,
+      'Status': 1,
+    });
+    await db.insert('Employee', {
+      'FullName': 'Dương Thị L',
+      'DOB': '2000-08-04',
+      'Gender': 0,
+      'Phone': '090999000',
+      'Salary': 7500000.0,
+      'StoreID': 4,
+      'AccountID': 11,
+    });
   }
 
   // --- CRUD BUSINESS METHODS ---
@@ -377,13 +828,16 @@ class DatabaseHelper {
   // Check login credentials, returns account + employee info
   Future<Map<String, dynamic>?> login(String username, String password) async {
     final db = await database;
-    final List<Map<String, dynamic>> res = await db.rawQuery('''
+    final List<Map<String, dynamic>> res = await db.rawQuery(
+      '''
       SELECT a.AccountID, a.Username, a.RoleID, a.Status, e.EmployeeID, e.FullName, e.StoreID, r.RoleName
       FROM Account a
       INNER JOIN Role r ON a.RoleID = r.RoleID
       LEFT JOIN Employee e ON a.AccountID = e.AccountID
       WHERE a.Username = ? AND a.Password = ?
-    ''', [username, password]);
+    ''',
+      [username, password],
+    );
 
     if (res.isNotEmpty) {
       return res.first;
@@ -463,11 +917,7 @@ class DatabaseHelper {
     return await db.transaction((txn) async {
       await txn.update(
         'Account',
-        {
-          'Username': username,
-          'Password': password,
-          'RoleID': roleId,
-        },
+        {'Username': username, 'Password': password, 'RoleID': roleId},
         where: 'AccountID = ?',
         whereArgs: [accountId],
       );
@@ -517,7 +967,8 @@ class DatabaseHelper {
   Future<bool> createInvoice({
     required int storeId,
     required int employeeId,
-    required List<Map<String, dynamic>> items, // keys: ProductID, Quantity, UnitPrice, PromotionID, DiscountAmount
+    required List<Map<String, dynamic>>
+    items, // keys: ProductID, Quantity, UnitPrice, PromotionID, DiscountAmount
     required double totalAmount,
   }) async {
     final db = await database;
@@ -542,11 +993,14 @@ class DatabaseHelper {
           });
 
           // Decrement inventory
-          await txn.rawUpdate('''
+          await txn.rawUpdate(
+            '''
             UPDATE Inventory
             SET Quantity = MAX(0, Quantity - ?)
             WHERE StoreID = ? AND ProductID = ?
-          ''', [item['Quantity'], storeId, item['ProductID']]);
+          ''',
+            [item['Quantity'], storeId, item['ProductID']],
+          );
         }
       });
       return true;
@@ -559,7 +1013,8 @@ class DatabaseHelper {
   Future<bool> createPurchaseOrder({
     required int employeeId,
     required int storeId,
-    required List<Map<String, dynamic>> items, // keys: ProductID, Quantity, ImportPrice
+    required List<Map<String, dynamic>>
+    items, // keys: ProductID, Quantity, ImportPrice
   }) async {
     final db = await database;
     try {
@@ -576,15 +1031,21 @@ class DatabaseHelper {
             'ProductID': item['ProductID'],
             'Quantity': item['Quantity'],
             'ImportPrice': item['ImportPrice'],
-            'ExpiredDate': DateTime.now().add(const Duration(days: 90)).toIso8601String().substring(0, 10),
+            'ExpiredDate': DateTime.now()
+                .add(const Duration(days: 90))
+                .toIso8601String()
+                .substring(0, 10),
           });
 
           // Increment inventory
-          await txn.rawUpdate('''
+          await txn.rawUpdate(
+            '''
             UPDATE Inventory
             SET Quantity = Quantity + ?
             WHERE StoreID = ? AND ProductID = ?
-          ''', [item['Quantity'], storeId, item['ProductID']]);
+          ''',
+            [item['Quantity'], storeId, item['ProductID']],
+          );
         }
       });
       return true;
@@ -608,7 +1069,8 @@ class DatabaseHelper {
         where: 'StoreID = ? AND ProductID = ?',
         whereArgs: [fromStoreId, productId],
       );
-      if (sourceInv.isEmpty || (sourceInv.first['Quantity'] as int) < quantity) {
+      if (sourceInv.isEmpty ||
+          (sourceInv.first['Quantity'] as int) < quantity) {
         return false; // Insufficient stock
       }
 
@@ -622,18 +1084,24 @@ class DatabaseHelper {
         });
 
         // Decrement source inventory
-        await txn.rawUpdate('''
+        await txn.rawUpdate(
+          '''
           UPDATE Inventory
           SET Quantity = Quantity - ?
           WHERE StoreID = ? AND ProductID = ?
-        ''', [quantity, fromStoreId, productId]);
+        ''',
+          [quantity, fromStoreId, productId],
+        );
 
         // Increment target inventory
-        await txn.rawUpdate('''
+        await txn.rawUpdate(
+          '''
           UPDATE Inventory
           SET Quantity = Quantity + ?
           WHERE StoreID = ? AND ProductID = ?
-        ''', [quantity, toStoreId, productId]);
+        ''',
+          [quantity, toStoreId, productId],
+        );
       });
       return true;
     } catch (e) {
@@ -660,13 +1128,16 @@ class DatabaseHelper {
   // Fetch product inventory details
   Future<List<Map<String, dynamic>>> getInventoryList(int storeId) async {
     final db = await database;
-    return await db.rawQuery('''
-      SELECT i.InventoryID, i.StoreID, i.ProductID, i.Quantity, i.SalePrice, p.ProductName, c.CategoryName
+    return await db.rawQuery(
+      '''
+      SELECT i.InventoryID, i.StoreID, i.ProductID, i.Quantity, i.SalePrice, p.ProductName, p.ImageUrl, c.CategoryName
       FROM Inventory i
       INNER JOIN Product p ON i.ProductID = p.ProductID
       INNER JOIN Category c ON p.CategoryID = c.CategoryID
       WHERE i.StoreID = ?
-    ''', [storeId]);
+    ''',
+      [storeId],
+    );
   }
 
   // Load available products in system
@@ -676,7 +1147,10 @@ class DatabaseHelper {
   }
 
   // Fetch revenue reports: period: 'Day', 'Month', 'Year'
-  Future<List<Map<String, dynamic>>> getRevenue(int? storeId, String period) async {
+  Future<List<Map<String, dynamic>>> getRevenue(
+    int? storeId,
+    String period,
+  ) async {
     final db = await database;
     String dateFilter = '';
     String groupBy = '';
@@ -695,7 +1169,8 @@ class DatabaseHelper {
     String query = '';
     List<dynamic> args = [];
     if (storeId != null) {
-      query = '''
+      query =
+          '''
         SELECT $dateFilter AS date, SUM(TotalAmount) AS revenue, COUNT(InvoiceID) AS orderCount
         FROM Invoice
         WHERE StoreID = ?
@@ -705,7 +1180,8 @@ class DatabaseHelper {
       ''';
       args = [storeId];
     } else {
-      query = '''
+      query =
+          '''
         SELECT $dateFilter AS date, SUM(TotalAmount) AS revenue, COUNT(InvoiceID) AS orderCount
         FROM Invoice
         GROUP BY $groupBy
@@ -743,7 +1219,9 @@ class DatabaseHelper {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getSchedulesForEmployee(int employeeId) async {
+  Future<List<Map<String, dynamic>>> getSchedulesForEmployee(
+    int employeeId,
+  ) async {
     final db = await database;
     return await db.query(
       'WorkSchedule',
@@ -755,13 +1233,16 @@ class DatabaseHelper {
 
   Future<List<Map<String, dynamic>>> getSchedulesForStore(int storeId) async {
     final db = await database;
-    return await db.rawQuery('''
+    return await db.rawQuery(
+      '''
       SELECT ws.ScheduleID, ws.EmployeeID, ws.WorkDate, ws.Shift, e.FullName
       FROM WorkSchedule ws
       INNER JOIN Employee e ON ws.EmployeeID = e.EmployeeID
       WHERE e.StoreID = ?
       ORDER BY ws.WorkDate ASC
-    ''', [storeId]);
+    ''',
+      [storeId],
+    );
   }
 
   Future<List<Map<String, dynamic>>> getStoresList() async {
@@ -818,11 +1299,19 @@ class DatabaseHelper {
   /// Returns -1 if store still has employees, -2 if has inventory, else rows deleted
   Future<int> deleteStore(int storeId) async {
     final db = await database;
-    final empCheck = await db.query('Employee',
-        where: 'StoreID = ?', whereArgs: [storeId], limit: 1);
+    final empCheck = await db.query(
+      'Employee',
+      where: 'StoreID = ?',
+      whereArgs: [storeId],
+      limit: 1,
+    );
     if (empCheck.isNotEmpty) return -1;
-    final invCheck = await db.query('Inventory',
-        where: 'StoreID = ? AND Quantity > 0', whereArgs: [storeId], limit: 1);
+    final invCheck = await db.query(
+      'Inventory',
+      where: 'StoreID = ? AND Quantity > 0',
+      whereArgs: [storeId],
+      limit: 1,
+    );
     if (invCheck.isNotEmpty) return -2;
     return await db.delete('Store', where: 'StoreID = ?', whereArgs: [storeId]);
   }
@@ -855,14 +1344,17 @@ class DatabaseHelper {
 
   Future<Map<String, dynamic>?> getEmployeeById(int employeeId) async {
     final db = await database;
-    final res = await db.rawQuery('''
+    final res = await db.rawQuery(
+      '''
       SELECT e.*, a.Username, a.RoleID, a.Status AS AccountStatus, r.RoleName, s.StoreName
       FROM Employee e
       LEFT JOIN Account a ON e.AccountID = a.AccountID
       LEFT JOIN Role r ON a.RoleID = r.RoleID
       LEFT JOIN Store s ON e.StoreID = s.StoreID
       WHERE e.EmployeeID = ?
-    ''', [employeeId]);
+    ''',
+      [employeeId],
+    );
     return res.isNotEmpty ? res.first : null;
   }
 
@@ -954,11 +1446,18 @@ class DatabaseHelper {
   /// Returns -1 if category still has products, else rows deleted
   Future<int> deleteCategory(int categoryId) async {
     final db = await database;
-    final check = await db.query('Product',
-        where: 'CategoryID = ?', whereArgs: [categoryId], limit: 1);
+    final check = await db.query(
+      'Product',
+      where: 'CategoryID = ?',
+      whereArgs: [categoryId],
+      limit: 1,
+    );
     if (check.isNotEmpty) return -1;
-    return await db.delete('Category',
-        where: 'CategoryID = ?', whereArgs: [categoryId]);
+    return await db.delete(
+      'Category',
+      where: 'CategoryID = ?',
+      whereArgs: [categoryId],
+    );
   }
 
   // ── PRODUCT CRUD ───────────────────────────────────────────────────────────
@@ -1025,11 +1524,15 @@ class DatabaseHelper {
   Future<int> deleteProduct(int productId) async {
     final db = await database;
     final check = await db.rawQuery(
-        'SELECT 1 FROM Inventory WHERE ProductID = ? AND Quantity > 0 LIMIT 1',
-        [productId]);
+      'SELECT 1 FROM Inventory WHERE ProductID = ? AND Quantity > 0 LIMIT 1',
+      [productId],
+    );
     if (check.isNotEmpty) return -1;
-    return await db
-        .delete('Product', where: 'ProductID = ?', whereArgs: [productId]);
+    return await db.delete(
+      'Product',
+      where: 'ProductID = ?',
+      whereArgs: [productId],
+    );
   }
 
   // ── SUPPLIER CRUD ──────────────────────────────────────────────────────────
@@ -1085,10 +1588,17 @@ class DatabaseHelper {
   /// Returns -1 if supplier still has products linked, else rows deleted
   Future<int> deleteSupplier(int supplierId) async {
     final db = await database;
-    final check = await db.query('Product',
-        where: 'SupplierID = ?', whereArgs: [supplierId], limit: 1);
+    final check = await db.query(
+      'Product',
+      where: 'SupplierID = ?',
+      whereArgs: [supplierId],
+      limit: 1,
+    );
     if (check.isNotEmpty) return -1;
-    return await db.delete('Supplier',
-        where: 'SupplierID = ?', whereArgs: [supplierId]);
+    return await db.delete(
+      'Supplier',
+      where: 'SupplierID = ?',
+      whereArgs: [supplierId],
+    );
   }
 }
