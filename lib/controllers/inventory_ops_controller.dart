@@ -40,17 +40,43 @@ class InventoryOpsController {
     );
   }
 
-  Future<bool> handleTransfer({
+  Future<bool> handleTransferRequest({
     required int fromStoreId,
     required int toStoreId,
     required int productId,
     required int quantity,
+    required int requestedByEmployeeId,
   }) async {
-    return await _inventoryOpsRepository.createTransferOrder(
+    return await _inventoryOpsRepository.createTransferRequest(
       fromStoreId: fromStoreId,
       toStoreId: toStoreId,
       productId: productId,
       quantity: quantity,
+      requestedByEmployeeId: requestedByEmployeeId,
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> loadManagerTransferRequests(
+    int storeId,
+  ) async {
+    return await _inventoryOpsRepository.getTransferRequestsForManager(storeId);
+  }
+
+  Future<List<Map<String, dynamic>>> loadStaffTransferRequests(
+    int employeeId,
+  ) async {
+    return await _inventoryOpsRepository.getTransferRequestsForStaff(employeeId);
+  }
+
+  Future<String> reviewTransferRequest({
+    required int transferId,
+    required int managerEmployeeId,
+    required bool approve,
+  }) async {
+    return await _inventoryOpsRepository.reviewTransferRequest(
+      transferId: transferId,
+      managerEmployeeId: managerEmployeeId,
+      approve: approve,
     );
   }
 

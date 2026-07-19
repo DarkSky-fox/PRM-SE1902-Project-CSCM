@@ -36,8 +36,10 @@ class _StoreManagementScreenState extends State<StoreManagementScreen>
   }
 
   Future<void> _loadStores() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
     final data = await _controller.loadStores();
+    if (!mounted) return;
     setState(() {
       _stores = data;
       _isLoading = false;
@@ -304,6 +306,77 @@ class _StoreManagementScreenState extends State<StoreManagementScreen>
     );
   }
 
+  void _confirmToggleStatus(Map<String, dynamic> store) {
+    final currentStatus = store['Status'] as String;
+    final isClosing = currentStatus == 'Active';
+    final storeName = store['StoreName'] as String;
+    final actionLabel = isClosing ? 'Tạm đóng' : 'Mở lại';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.darkCard,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        icon: Icon(
+          isClosing ? Icons.pause_circle_rounded : Icons.play_circle_rounded,
+          color: isClosing ? AppTheme.warning : AppTheme.success,
+          size: 48,
+        ),
+        title: Text(
+          '$actionLabel cửa hàng?',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.inter(
+            color: AppTheme.textPrimary,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        content: Text(
+          isClosing
+              ? 'Bạn có chắc muốn tạm đóng "$storeName"? Cửa hàng sẽ chuyển sang trạng thái ngừng hoạt động.'
+              : 'Bạn có chắc muốn mở lại "$storeName"? Cửa hàng sẽ chuyển sang trạng thái hoạt động.',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.inter(color: AppTheme.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Hủy',
+              style: GoogleFonts.inter(color: AppTheme.textSecondary),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final success = await _controller.toggleStatus(
+                store['StoreID'] as int,
+                currentStatus,
+              );
+              if (!mounted) return;
+              if (success) {
+                await _loadStores();
+              }
+              if (!mounted) return;
+              _showSnack(
+                success
+                    ? 'Đã ${isClosing ? 'tạm đóng' : 'mở lại'} cửa hàng "$storeName".'
+                    : 'Không thể ${isClosing ? 'tạm đóng' : 'mở lại'} cửa hàng. Vui lòng thử lại!',
+                isError: !success,
+              );
+            },
+            child: Text(
+              actionLabel,
+              style: GoogleFonts.inter(
+                color: isClosing ? AppTheme.warning : AppTheme.success,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showSnack(String msg, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(msg, style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
@@ -434,15 +507,11 @@ class _StoreManagementScreenState extends State<StoreManagementScreen>
                   PopupMenuButton<String>(
                     color: AppTheme.darkElevated,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    onSelected: (val) async {
+                    onSelected: (val) {
                       if (val == 'edit') {
                         _showStoreForm(store: store);
                       } else if (val == 'toggle') {
-                        await _controller.toggleStatus(
-                          store['StoreID'] as int,
-                          store['Status'] as String,
-                        );
-                        _loadStores();
+                        _confirmToggleStatus(store);
                       } else if (val == 'delete') {
                         _confirmDelete(store);
                       }

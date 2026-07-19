@@ -3,7 +3,7 @@ import '../utils/app_theme.dart';
 import '../controllers/inventory_ops_controller.dart';
 
 class InventoryOpsScreen extends StatefulWidget {
-  final int initialTab; // 0: Nhập hàng (PO), 1: Chuyển kho, 2: Kiểm kho
+  final int initialTab; // -1: Tồn kho, 0: Nhập hàng, 1: Chuyển kho, 2: Kiểm kho
   final int storeId;
   final int employeeId;
   final int roleId;
@@ -27,6 +27,7 @@ class _InventoryOpsScreenState extends State<InventoryOpsScreen>
   List<Map<String, dynamic>> _inventory = [];
   List<Map<String, dynamic>> _allProducts = [];
   List<Map<String, dynamic>> _otherStores = [];
+  List<Map<String, dynamic>> _transferRequests = [];
 
   int? _selectedImportProductId;
   final _importQtyController = TextEditingController();
@@ -48,22 +49,26 @@ class _InventoryOpsScreenState extends State<InventoryOpsScreen>
   @override
   void initState() {
     super.initState();
-    int tabCount = widget.roleId == 2 ? 4 : 2;
+    final isManager = widget.roleId == 2;
+    final tabCount = isManager ? 2 : 3;
     int initialIndex;
-    if (widget.roleId == 2) {
+    if (isManager) {
       // For manager:
       // initialTab: 0 -> Nhập kho (Tab index 1)
-      // initialTab: 1 -> Chuyển kho (Tab index 2)
-      // initialTab: 2 -> Kiểm kho (Tab index 3)
-      // Tab index 0 is the new Tồn kho tab.
-      initialIndex = (widget.initialTab >= 0 && widget.initialTab <= 2)
-          ? widget.initialTab + 1
-          : 0;
+      // Các giá trị khác -> Tồn kho (Tab index 0)
+      initialIndex = widget.initialTab == 0 ? 1 : 0;
     } else {
       // For staff:
-      // initialTab: 1 -> Chuyển kho (Tab index 0)
-      // initialTab: 2 -> Kiểm kho (Tab index 1)
-      initialIndex = widget.initialTab == 1 ? 0 : 1;
+      // initialTab: 1 -> Chuyển kho (Tab index 1)
+      // initialTab: 2 -> Kiểm kho (Tab index 2)
+      // Các giá trị khác -> Tồn kho (Tab index 0)
+      if (widget.initialTab == 1) {
+        initialIndex = 1;
+      } else if (widget.initialTab == 2) {
+        initialIndex = 2;
+      } else {
+        initialIndex = 0;
+      }
     }
 
     _tabController = TabController(length: tabCount, vsync: this, initialIndex: initialIndex);
@@ -74,11 +79,18 @@ class _InventoryOpsScreenState extends State<InventoryOpsScreen>
     final inv = await _inventoryOpsController.loadInventory(widget.storeId);
     final prods = await _inventoryOpsController.loadProducts();
     final stores = await _inventoryOpsController.loadStores();
+    final requests = widget.roleId == 3
+        ? await _inventoryOpsController.loadStaffTransferRequests(
+            widget.employeeId,
+          )
+        : <Map<String, dynamic>>[];
 
+    if (!mounted) return;
     setState(() {
       _inventory = inv;
       _allProducts = prods;
       _otherStores = stores.where((s) => s['StoreID'] != widget.storeId).toList();
+      _transferRequests = requests;
     });
   }
 
@@ -171,13 +183,15 @@ class _InventoryOpsScreenState extends State<InventoryOpsScreen>
 
     setState(() => _isLoading = true);
 
-    final success = await _inventoryOpsController.handleTransfer(
+    final success = await _inventoryOpsController.handleTransferRequest(
       fromStoreId: widget.storeId,
       toStoreId: _selectedTargetStoreId!,
       productId: _selectedTransferProductId!,
       quantity: qty,
+      requestedByEmployeeId: widget.employeeId,
     );
 
+    if (!mounted) return;
     setState(() => _isLoading = false);
 
     if (success) {
@@ -187,9 +201,13 @@ class _InventoryOpsScreenState extends State<InventoryOpsScreen>
         _selectedTargetStoreId = null;
       });
       _loadData();
-      _showSuccessDialog('Đã thực hiện chuyển hàng thành công.');
+      _showSuccessDialog(
+        'Đã gửi yêu cầu chuyển kho. Vui lòng chờ Manager phê duyệt.',
+      );
     } else {
-      _showErrorSnackBar('Lỗi hệ thống khi chuyển kho!');
+      _showErrorSnackBar(
+        'Không thể tạo yêu cầu. Vui lòng kiểm tra tồn kho và thử lại!',
+      );
     }
   }
 
@@ -470,38 +488,57 @@ class _InventoryOpsScreenState extends State<InventoryOpsScreen>
                               runSpacing: 8,
                               alignment: WrapAlignment.end,
                               children: [
-                                ElevatedButton.icon(
-                                  onPressed: () {
-                                    setState(() {
-                                      _selectedImportProductId = productId;
-                                    });
-                                    _tabController.animateTo(1); // Switch to Nhập Kho
-                                  },
-                                  icon: const Icon(Icons.add_shopping_cart_rounded, size: 16, color: Colors.white),
-                                  label: const Text('Nhập kho'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppTheme.primary,
-                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                                    textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                if (widget.roleId == 2)
+                                  ElevatedButton.icon(
+                                    onPressed: () {
+                                      setState(() {
+                                        _selectedImportProductId = productId;
+                                      });
+                                      _tabController.animateTo(1);
+                                    },
+                                    icon: const Icon(Icons.add_shopping_cart_rounded, size: 16, color: Colors.white),
+                                    label: const Text('Nhập kho'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppTheme.primary,
+                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                      textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    ),
                                   ),
-                                ),
-                                ElevatedButton.icon(
-                                  onPressed: () {
-                                    setState(() {
-                                      _selectedTransferProductId = productId;
-                                    });
-                                    _tabController.animateTo(2); // Switch to Chuyển Kho
-                                  },
-                                  icon: const Icon(Icons.swap_horiz_rounded, size: 16, color: Colors.white),
-                                  label: const Text('Chuyển kho'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF3B82F6),
-                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                                    textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                if (widget.roleId != 2) ...[
+                                  ElevatedButton.icon(
+                                    onPressed: () {
+                                      setState(() {
+                                        _selectedTransferProductId = productId;
+                                      });
+                                      _tabController.animateTo(1);
+                                    },
+                                    icon: const Icon(Icons.swap_horiz_rounded, size: 16, color: Colors.white),
+                                    label: const Text('Chuyển kho'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF3B82F6),
+                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                      textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    ),
                                   ),
-                                ),
+                                  ElevatedButton.icon(
+                                    onPressed: () {
+                                      setState(() {
+                                        _selectedAuditProductId = productId;
+                                      });
+                                      _tabController.animateTo(2);
+                                    },
+                                    icon: const Icon(Icons.fact_check_rounded, size: 16, color: Colors.white),
+                                    label: const Text('Kiểm kho'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFFE040FB),
+                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                      textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    ),
+                                  ),
+                                ],
                               ],
                             ),
                           ],
@@ -517,13 +554,16 @@ class _InventoryOpsScreenState extends State<InventoryOpsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final List<Tab> tabs = [];
-    if (widget.roleId == 2) {
-      tabs.add(const Tab(icon: Icon(Icons.inventory_2_rounded), text: 'Tồn kho'));
+    final isManager = widget.roleId == 2;
+    final List<Tab> tabs = [
+      const Tab(icon: Icon(Icons.inventory_2_rounded), text: 'Tồn kho'),
+    ];
+    if (isManager) {
       tabs.add(const Tab(icon: Icon(Icons.move_to_inbox_rounded), text: 'Nhập kho'));
+    } else {
+      tabs.add(const Tab(icon: Icon(Icons.swap_horiz_rounded), text: 'Chuyển kho'));
+      tabs.add(const Tab(icon: Icon(Icons.fact_check_rounded), text: 'Kiểm kho'));
     }
-    tabs.add(const Tab(icon: Icon(Icons.swap_horiz_rounded), text: 'Chuyển kho'));
-    tabs.add(const Tab(icon: Icon(Icons.fact_check_rounded), text: 'Kiểm kho'));
 
     return Scaffold(
       backgroundColor: AppTheme.offWhite,
@@ -531,8 +571,7 @@ class _InventoryOpsScreenState extends State<InventoryOpsScreen>
         title: const Text('Quản Lý Kho Hàng'),
         bottom: TabBar(
           controller: _tabController,
-          isScrollable: widget.roleId == 2,
-          tabAlignment: widget.roleId == 2 ? TabAlignment.start : null,
+          isScrollable: false,
           tabs: tabs,
           indicatorColor: AppTheme.primary,
           labelColor: AppTheme.primary,
@@ -543,14 +582,13 @@ class _InventoryOpsScreenState extends State<InventoryOpsScreen>
           ? const Center(child: CircularProgressIndicator())
           : TabBarView(
               controller: _tabController,
-              children: widget.roleId == 2
+              children: isManager
                   ? [
                       _buildInventoryTab(),
                       _buildImportTab(),
-                      _buildTransferTab(),
-                      _buildAuditTab(),
                     ]
                   : [
+                      _buildInventoryTab(),
                       _buildTransferTab(),
                       _buildAuditTab(),
                     ],
@@ -565,6 +603,7 @@ class _InventoryOpsScreenState extends State<InventoryOpsScreen>
     required List<Widget> formFields,
     required String buttonText,
     required VoidCallback onPressed,
+    List<Widget> footer = const [],
   }) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -616,6 +655,7 @@ class _InventoryOpsScreenState extends State<InventoryOpsScreen>
             onPressed: onPressed,
             child: Text(buttonText, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
           ),
+          ...footer,
           const SizedBox(height: 40),
         ],
       ),
@@ -647,12 +687,125 @@ class _InventoryOpsScreenState extends State<InventoryOpsScreen>
     );
   }
 
+  Color _transferStatusColor(String status) {
+    switch (status) {
+      case 'Approved':
+        return AppTheme.success;
+      case 'Rejected':
+        return AppTheme.error;
+      default:
+        return AppTheme.warning;
+    }
+  }
+
+  String _transferStatusLabel(String status) {
+    switch (status) {
+      case 'Approved':
+        return 'Đã duyệt';
+      case 'Rejected':
+        return 'Đã từ chối';
+      default:
+        return 'Chờ duyệt';
+    }
+  }
+
+  String _formatTransferDate(Object? value) {
+    final raw = value?.toString() ?? '';
+    if (raw.isEmpty) return '--';
+    final normalized = raw.replaceFirst('T', ' ');
+    return normalized.length >= 16 ? normalized.substring(0, 16) : normalized;
+  }
+
+  Widget _buildTransferRequestHistory() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 28),
+        const Divider(),
+        const SizedBox(height: 12),
+        const Text(
+          'Yêu cầu chuyển kho của tôi',
+          style: TextStyle(
+            color: AppTheme.textPrimary,
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 12),
+        if (_transferRequests.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 20),
+            child: Center(
+              child: Text(
+                'Chưa có yêu cầu chuyển kho',
+                style: TextStyle(color: AppTheme.textSecondary),
+              ),
+            ),
+          )
+        else
+          ..._transferRequests.map((request) {
+            final status = request['Status'] as String? ?? 'Pending';
+            final statusColor = _transferStatusColor(status);
+            return Card(
+              color: AppTheme.white,
+              margin: const EdgeInsets.only(bottom: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+                side: BorderSide(color: statusColor.withAlpha(70)),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            request['ProductName'] as String? ?? 'Sản phẩm',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.textPrimary,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          _transferStatusLabel(status),
+                          style: TextStyle(
+                            color: statusColor,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Chuyển ${request['Quantity'] ?? 0} sang ${request['ToStoreName'] ?? '--'}',
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      _formatTransferDate(request['TransferDate']),
+                      style: const TextStyle(
+                        color: AppTheme.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+      ],
+    );
+  }
+
   Widget _buildTransferTab() {
     return _buildTabLayout(
       icon: Icons.swap_horiz_rounded,
-      title: 'Điều Chuyển Hàng Hóa',
-      subtitle: 'Chuyển hàng sang cửa hàng khác',
-      buttonText: 'XÁC NHẬN CHUYỂN KHO',
+      title: 'Tạo Yêu Cầu Chuyển Kho',
+      subtitle: 'Yêu cầu sẽ được thực hiện sau khi Manager phê duyệt',
+      buttonText: 'GỬI YÊU CẦU CHUYỂN KHO',
       onPressed: _handleTransfer,
       formFields: [
         DropdownButtonFormField<int>(
@@ -677,6 +830,7 @@ class _InventoryOpsScreenState extends State<InventoryOpsScreen>
         const SizedBox(height: 16),
         TextField(controller: _transferQtyController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Số lượng chuyển')),
       ],
+      footer: [_buildTransferRequestHistory()],
     );
   }
 

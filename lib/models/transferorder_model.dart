@@ -5,6 +5,10 @@ class TransferOrderModel {
   final int? productId;
   final int quantity;
   final String transferDate;
+  final int? requestedByEmployeeId;
+  final String status;
+  final int? reviewedByEmployeeId;
+  final String? reviewedAt;
 
   TransferOrderModel({
     this.transferId,
@@ -13,6 +17,10 @@ class TransferOrderModel {
     this.productId,
     required this.quantity,
     required this.transferDate,
+    this.requestedByEmployeeId,
+    this.status = 'Pending',
+    this.reviewedByEmployeeId,
+    this.reviewedAt,
   });
 
   Map<String, dynamic> toMap() {
@@ -23,6 +31,10 @@ class TransferOrderModel {
       'ProductID': productId,
       'Quantity': quantity,
       'TransferDate': transferDate,
+      'RequestedByEmployeeID': requestedByEmployeeId,
+      'Status': status,
+      'ReviewedByEmployeeID': reviewedByEmployeeId,
+      'ReviewedAt': reviewedAt,
     };
   }
 
@@ -34,6 +46,10 @@ class TransferOrderModel {
       productId: map['ProductID'] as int?,
       quantity: map['Quantity'] as int,
       transferDate: map['TransferDate'] as String,
+      requestedByEmployeeId: map['RequestedByEmployeeID'] as int?,
+      status: (map['Status'] as String?) ?? 'Pending',
+      reviewedByEmployeeId: map['ReviewedByEmployeeID'] as int?,
+      reviewedAt: map['ReviewedAt'] as String?,
     );
   }
 }

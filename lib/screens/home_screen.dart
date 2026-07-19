@@ -11,6 +11,7 @@ import 'store_management_screen.dart';
 import 'category_management_screen.dart';
 import 'product_management_screen.dart';
 import 'supplier_management_screen.dart';
+import 'transfer_approval_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String username;
@@ -133,6 +134,16 @@ class _HomeScreenState extends State<HomeScreen>
       ));
     } else {
       _modules.add(_DashboardModule(
+        icon: Icons.inventory_2_rounded,
+        label: 'Tồn kho',
+        subtitle: 'Xem chi tiết kho hiện tại',
+        color: const Color(0xFF10B981),
+        bgGradient: const LinearGradient(colors: [Color(0xFF10B981), Color(0xFF047857)]),
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => InventoryOpsScreen(initialTab: -1, storeId: widget.storeId!, employeeId: widget.employeeId, roleId: 2),
+        )).then((_) => _loadStats()),
+      ));
+      _modules.add(_DashboardModule(
         icon: Icons.move_to_inbox_rounded,
         label: 'Nhập hàng',
         subtitle: 'Nhập hàng vào kho',
@@ -143,23 +154,16 @@ class _HomeScreenState extends State<HomeScreen>
         )).then((_) => _loadStats()),
       ));
       _modules.add(_DashboardModule(
-        icon: Icons.swap_horiz_rounded,
-        label: 'Chuyển hàng',
-        subtitle: 'Chuyển sang store khác',
+        icon: Icons.approval_rounded,
+        label: 'Duyệt chuyển kho',
+        subtitle: 'Phê duyệt yêu cầu từ Staff',
         color: const Color(0xFF3B82F6),
         bgGradient: const LinearGradient(colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)]),
         onTap: () => Navigator.of(context).push(MaterialPageRoute(
-          builder: (_) => InventoryOpsScreen(initialTab: 1, storeId: widget.storeId!, employeeId: widget.employeeId, roleId: 2),
-        )).then((_) => _loadStats()),
-      ));
-      _modules.add(_DashboardModule(
-        icon: Icons.fact_check_rounded,
-        label: 'Kiểm kho',
-        subtitle: 'Cập nhật tồn kho thực tế',
-        color: const Color(0xFFE040FB),
-        bgGradient: const LinearGradient(colors: [Color(0xFFE040FB), Color(0xFFAD1457)]),
-        onTap: () => Navigator.of(context).push(MaterialPageRoute(
-          builder: (_) => InventoryOpsScreen(initialTab: 2, storeId: widget.storeId!, employeeId: widget.employeeId, roleId: 2),
+          builder: (_) => TransferApprovalScreen(
+            storeId: widget.storeId!,
+            employeeId: widget.employeeId,
+          ),
         )).then((_) => _loadStats()),
       ));
       _modules.add(_DashboardModule(

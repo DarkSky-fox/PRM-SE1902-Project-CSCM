@@ -19,13 +19,37 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 10,
+      version: 11,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
   }
 
   Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion >= 10) {
+      if (oldVersion < 11) {
+        await db.execute('''
+          ALTER TABLE TransferOrder
+          ADD COLUMN RequestedByEmployeeID INTEGER
+          REFERENCES Employee(EmployeeID) ON DELETE SET NULL
+        ''');
+        await db.execute('''
+          ALTER TABLE TransferOrder
+          ADD COLUMN Status TEXT NOT NULL DEFAULT 'Approved'
+        ''');
+        await db.execute('''
+          ALTER TABLE TransferOrder
+          ADD COLUMN ReviewedByEmployeeID INTEGER
+          REFERENCES Employee(EmployeeID) ON DELETE SET NULL
+        ''');
+        await db.execute('''
+          ALTER TABLE TransferOrder
+          ADD COLUMN ReviewedAt TEXT
+        ''');
+      }
+      return;
+    }
+
     await db.execute('DROP TABLE IF EXISTS WorkSchedule');
     await db.execute('DROP TABLE IF EXISTS InvoiceDetail');
     await db.execute('DROP TABLE IF EXISTS Invoice');
@@ -175,9 +199,15 @@ class DatabaseHelper {
         ProductID INTEGER,
         Quantity INTEGER NOT NULL,
         TransferDate TEXT,
+        RequestedByEmployeeID INTEGER,
+        Status TEXT NOT NULL DEFAULT 'Pending',
+        ReviewedByEmployeeID INTEGER,
+        ReviewedAt TEXT,
         FOREIGN KEY (FromStoreID) REFERENCES Store (StoreID) ON DELETE RESTRICT,
         FOREIGN KEY (ToStoreID) REFERENCES Store (StoreID) ON DELETE RESTRICT,
-        FOREIGN KEY (ProductID) REFERENCES Product (ProductID) ON DELETE RESTRICT
+        FOREIGN KEY (ProductID) REFERENCES Product (ProductID) ON DELETE RESTRICT,
+        FOREIGN KEY (RequestedByEmployeeID) REFERENCES Employee (EmployeeID) ON DELETE SET NULL,
+        FOREIGN KEY (ReviewedByEmployeeID) REFERENCES Employee (EmployeeID) ON DELETE SET NULL
       )
     ''');
 
@@ -1054,58 +1084,236 @@ class DatabaseHelper {
     }
   }
 
-  // Stock transfer: fromStoreId decrements, toStoreId increments
-  Future<bool> createTransferOrder({
+  // Staff creates a transfer request. Inventory changes only after approval.
+  Future<bool> createTransferRequest({
     required int fromStoreId,
     required int toStoreId,
     required int productId,
     required int quantity,
+    required int requestedByEmployeeId,
   }) async {
     final db = await database;
     try {
-      // Validate enough stock in source store
-      final List<Map<String, dynamic>> sourceInv = await db.query(
-        'Inventory',
-        where: 'StoreID = ? AND ProductID = ?',
-        whereArgs: [fromStoreId, productId],
-      );
-      if (sourceInv.isEmpty ||
-          (sourceInv.first['Quantity'] as int) < quantity) {
-        return false; // Insufficient stock
-      }
+      if (fromStoreId == toStoreId || quantity <= 0) return false;
 
-      await db.transaction((txn) async {
+      return await db.transaction<bool>((txn) async {
+        final requester = await txn.rawQuery(
+          '''
+          SELECT e.EmployeeID
+          FROM Employee e
+          INNER JOIN Account a ON a.AccountID = e.AccountID
+          WHERE e.EmployeeID = ?
+            AND e.StoreID = ?
+            AND a.RoleID = 3
+            AND a.Status = 1
+          LIMIT 1
+          ''',
+          [requestedByEmployeeId, fromStoreId],
+        );
+        if (requester.isEmpty) return false;
+
+        final sourceInv = await txn.query(
+          'Inventory',
+          where: 'StoreID = ? AND ProductID = ?',
+          whereArgs: [fromStoreId, productId],
+          limit: 1,
+        );
+        if (sourceInv.isEmpty ||
+            (sourceInv.first['Quantity'] as int) < quantity) {
+          return false;
+        }
+
         await txn.insert('TransferOrder', {
           'FromStoreID': fromStoreId,
           'ToStoreID': toStoreId,
           'ProductID': productId,
           'Quantity': quantity,
           'TransferDate': DateTime.now().toIso8601String(),
+          'RequestedByEmployeeID': requestedByEmployeeId,
+          'Status': 'Pending',
         });
+        return true;
+      });
+    } catch (e) {
+      return false;
+    }
+  }
 
-        // Decrement source inventory
-        await txn.rawUpdate(
+  Future<List<Map<String, dynamic>>> getTransferRequestsForManager(
+    int storeId,
+  ) async {
+    return await _getTransferRequests(
+      't.FromStoreID = ?',
+      [storeId],
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getTransferRequestsForStaff(
+    int employeeId,
+  ) async {
+    return await _getTransferRequests(
+      't.RequestedByEmployeeID = ?',
+      [employeeId],
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> _getTransferRequests(
+    String whereClause,
+    List<Object?> whereArgs,
+  ) async {
+    final db = await database;
+    return await db.rawQuery(
+      '''
+      SELECT t.TransferID, t.FromStoreID, t.ToStoreID, t.ProductID,
+             t.Quantity, t.TransferDate, t.RequestedByEmployeeID,
+             t.Status, t.ReviewedByEmployeeID, t.ReviewedAt,
+             p.ProductName,
+             sourceStore.StoreName AS FromStoreName,
+             targetStore.StoreName AS ToStoreName,
+             requester.FullName AS RequestedByName,
+             reviewer.FullName AS ReviewedByName,
+             COALESCE(sourceInventory.Quantity, 0) AS AvailableQuantity
+      FROM TransferOrder t
+      INNER JOIN Product p ON p.ProductID = t.ProductID
+      INNER JOIN Store sourceStore ON sourceStore.StoreID = t.FromStoreID
+      INNER JOIN Store targetStore ON targetStore.StoreID = t.ToStoreID
+      LEFT JOIN Employee requester
+        ON requester.EmployeeID = t.RequestedByEmployeeID
+      LEFT JOIN Employee reviewer
+        ON reviewer.EmployeeID = t.ReviewedByEmployeeID
+      LEFT JOIN Inventory sourceInventory
+        ON sourceInventory.StoreID = t.FromStoreID
+       AND sourceInventory.ProductID = t.ProductID
+      WHERE $whereClause
+      ORDER BY CASE t.Status
+                 WHEN 'Pending' THEN 0
+                 WHEN 'Approved' THEN 1
+                 ELSE 2
+               END,
+               t.TransferID DESC
+      ''',
+      whereArgs,
+    );
+  }
+
+  // Returns: approved, rejected, insufficient_stock, already_processed,
+  // unauthorized, not_found, or error.
+  Future<String> reviewTransferRequest({
+    required int transferId,
+    required int managerEmployeeId,
+    required bool approve,
+  }) async {
+    final db = await database;
+    try {
+      return await db.transaction<String>((txn) async {
+        final requests = await txn.query(
+          'TransferOrder',
+          where: 'TransferID = ?',
+          whereArgs: [transferId],
+          limit: 1,
+        );
+        if (requests.isEmpty) return 'not_found';
+
+        final request = requests.first;
+        if (request['Status'] != 'Pending') return 'already_processed';
+
+        final manager = await txn.rawQuery(
+          '''
+          SELECT e.EmployeeID
+          FROM Employee e
+          INNER JOIN Account a ON a.AccountID = e.AccountID
+          WHERE e.EmployeeID = ?
+            AND e.StoreID = ?
+            AND a.RoleID = 2
+            AND a.Status = 1
+          LIMIT 1
+          ''',
+          [managerEmployeeId, request['FromStoreID']],
+        );
+        if (manager.isEmpty) return 'unauthorized';
+
+        final reviewedAt = DateTime.now().toIso8601String();
+        if (!approve) {
+          final updated = await txn.update(
+            'TransferOrder',
+            {
+              'Status': 'Rejected',
+              'ReviewedByEmployeeID': managerEmployeeId,
+              'ReviewedAt': reviewedAt,
+            },
+            where: 'TransferID = ? AND Status = ?',
+            whereArgs: [transferId, 'Pending'],
+          );
+          return updated == 1 ? 'rejected' : 'already_processed';
+        }
+
+        final fromStoreId = request['FromStoreID'] as int;
+        final toStoreId = request['ToStoreID'] as int;
+        final productId = request['ProductID'] as int;
+        final quantity = request['Quantity'] as int;
+
+        final sourceInventory = await txn.query(
+          'Inventory',
+          where: 'StoreID = ? AND ProductID = ?',
+          whereArgs: [fromStoreId, productId],
+          limit: 1,
+        );
+        if (sourceInventory.isEmpty ||
+            (sourceInventory.first['Quantity'] as int) < quantity) {
+          return 'insufficient_stock';
+        }
+
+        final decremented = await txn.rawUpdate(
           '''
           UPDATE Inventory
           SET Quantity = Quantity - ?
-          WHERE StoreID = ? AND ProductID = ?
+          WHERE StoreID = ? AND ProductID = ? AND Quantity >= ?
         ''',
-          [quantity, fromStoreId, productId],
+          [quantity, fromStoreId, productId, quantity],
         );
+        if (decremented != 1) return 'insufficient_stock';
 
-        // Increment target inventory
-        await txn.rawUpdate(
-          '''
-          UPDATE Inventory
-          SET Quantity = Quantity + ?
-          WHERE StoreID = ? AND ProductID = ?
-        ''',
-          [quantity, toStoreId, productId],
+        final targetInventory = await txn.query(
+          'Inventory',
+          where: 'StoreID = ? AND ProductID = ?',
+          whereArgs: [toStoreId, productId],
+          limit: 1,
         );
+        if (targetInventory.isEmpty) {
+          await txn.insert('Inventory', {
+            'StoreID': toStoreId,
+            'ProductID': productId,
+            'Quantity': quantity,
+            'SalePrice': sourceInventory.first['SalePrice'] ?? 0.0,
+          });
+        } else {
+          await txn.rawUpdate(
+            '''
+            UPDATE Inventory
+            SET Quantity = Quantity + ?
+            WHERE StoreID = ? AND ProductID = ?
+          ''',
+            [quantity, toStoreId, productId],
+          );
+        }
+
+        final updated = await txn.update(
+          'TransferOrder',
+          {
+            'Status': 'Approved',
+            'ReviewedByEmployeeID': managerEmployeeId,
+            'ReviewedAt': reviewedAt,
+          },
+          where: 'TransferID = ? AND Status = ?',
+          whereArgs: [transferId, 'Pending'],
+        );
+        if (updated != 1) {
+          throw StateError('Transfer request was processed concurrently.');
+        }
+        return 'approved';
       });
-      return true;
     } catch (e) {
-      return false;
+      return 'error';
     }
   }
 
