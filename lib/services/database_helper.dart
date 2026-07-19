@@ -19,7 +19,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 3,
+      version: 10,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -1130,7 +1130,7 @@ class DatabaseHelper {
     final db = await database;
     return await db.rawQuery(
       '''
-      SELECT i.InventoryID, i.StoreID, i.ProductID, i.Quantity, i.SalePrice, p.ProductName, p.ProductImage, c.CategoryName
+      SELECT i.InventoryID, i.StoreID, i.ProductID, i.Quantity, i.SalePrice, p.ProductName, p.ImageUrl, c.CategoryName
       FROM Inventory i
       INNER JOIN Product p ON i.ProductID = p.ProductID
       INNER JOIN Category c ON p.CategoryID = c.CategoryID
