@@ -958,6 +958,34 @@ class _PosScreenState extends State<PosScreen> {
                 boxShadow: AppTheme.cardShadow,
               ),
               child: ElevatedButton.icon(
+                icon: const Icon(Icons.inventory_2_rounded, color: Colors.white),
+                label: const Text('XEM DANH SÁCH TỒN KHO', style: TextStyle(color: Colors.white)),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => InventoryOpsScreen(
+                        initialTab: -1,
+                        storeId: widget.storeId,
+                        employeeId: widget.employeeId,
+                        roleId: 3,
+                      ),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF10B981),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: AppTheme.cardShadow,
+              ),
+              child: ElevatedButton.icon(
                 icon: const Icon(Icons.swap_horiz_rounded, color: Colors.white),
                 label: const Text('ĐIỀU CHUYỂN HÀNG HÓA', style: TextStyle(color: Colors.white)),
                 onPressed: () {
