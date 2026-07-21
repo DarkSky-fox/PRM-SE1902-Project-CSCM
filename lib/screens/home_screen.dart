@@ -12,6 +12,7 @@ import 'category_management_screen.dart';
 import 'product_management_screen.dart';
 import 'supplier_management_screen.dart';
 import 'transfer_approval_screen.dart';
+import 'invoice_management_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String username;
@@ -132,6 +133,16 @@ class _HomeScreenState extends State<HomeScreen>
           builder: (_) => RevenueReportScreen(roleId: 1),
         )),
       ));
+      _modules.add(_DashboardModule(
+        icon: Icons.receipt_long_rounded,
+        label: 'Hóa đơn',
+        subtitle: 'Quản lý & Xem lịch sử',
+        color: const Color(0xFFEF4444),
+        bgGradient: const LinearGradient(colors: [Color(0xFFEF4444), Color(0xFFB91C1C)]),
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => InvoiceManagementScreen(roleId: 1),
+        )),
+      ));
     } else {
       _modules.add(_DashboardModule(
         icon: Icons.inventory_2_rounded,
@@ -184,6 +195,16 @@ class _HomeScreenState extends State<HomeScreen>
         bgGradient: const LinearGradient(colors: [Color(0xFF8B5CF6), Color(0xFF6D28D9)]),
         onTap: () => Navigator.of(context).push(MaterialPageRoute(
           builder: (_) => RevenueReportScreen(roleId: 2, storeId: widget.storeId!),
+        )),
+      ));
+      _modules.add(_DashboardModule(
+        icon: Icons.receipt_long_rounded,
+        label: 'Hóa đơn',
+        subtitle: 'Quản lý hóa đơn cửa hàng',
+        color: const Color(0xFFEF4444),
+        bgGradient: const LinearGradient(colors: [Color(0xFFEF4444), Color(0xFFB91C1C)]),
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => InvoiceManagementScreen(roleId: 2, storeId: widget.storeId),
         )),
       ));
     }

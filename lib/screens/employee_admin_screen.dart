@@ -38,6 +38,10 @@ class _EmployeeAdminScreenState extends State<EmployeeAdminScreen>
   int? _selectedStoreId;
   int _selectedGender = 1;
 
+  // Filter fields
+  final _searchEmployeeCtrl = TextEditingController();
+  int? _filterEmployeeRoleId;
+
   // Scheduling fields - weekly timetable
   late DateTime _weekStart;
   Map<int, Map<String, String>> _weekShifts = {};
@@ -107,6 +111,7 @@ class _EmployeeAdminScreenState extends State<EmployeeAdminScreen>
     _passwordController.dispose();
     _fullNameController.dispose();
     _phoneController.dispose();
+    _searchEmployeeCtrl.dispose();
     super.dispose();
   }
 
@@ -233,101 +238,173 @@ class _EmployeeAdminScreenState extends State<EmployeeAdminScreen>
 
   // ── Tab 1: Employee List ─────────────────────────────────────────────────────
   Widget _buildEmployeeListTab() {
-    if (_employees.isEmpty) {
-      return Center(
-        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          const Icon(Icons.people_outline_rounded, size: 72, color: AppTheme.divider),
-          const SizedBox(height: 16),
-          Text('Chưa có nhân viên trực thuộc', style: GoogleFonts.inter(color: AppTheme.textSecondary, fontSize: 15, fontWeight: FontWeight.w500)),
-        ]),
-      );
-    }
+    final query = _searchEmployeeCtrl.text.toLowerCase();
+    final filteredEmployees = _employees.where((emp) {
+      final name = (emp['FullName'] ?? '').toString().toLowerCase();
+      final username = (emp['Username'] ?? '').toString().toLowerCase();
+      
+      final matchesSearch = query.isEmpty || name.contains(query) || username.contains(query);
+      final matchesRole = _filterEmployeeRoleId == null || emp['RoleID'] == _filterEmployeeRoleId;
+      
+      return matchesSearch && matchesRole;
+    }).toList();
 
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-      itemCount: _employees.length,
-      itemBuilder: (context, index) {
-        final emp = _employees[index];
-        final isLocked = emp['Status'] == 0;
-        final isManager = emp['RoleID'] == 2;
-
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          decoration: BoxDecoration(
-            color: AppTheme.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: isLocked ? AppTheme.error.withAlpha(60) : AppTheme.divider),
-            boxShadow: AppTheme.cardShadow,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(children: [
-              // Avatar
-              Container(
-                width: 48, height: 48,
-                decoration: BoxDecoration(
-                  color: isLocked ? const Color(0xFFFFEBEE) : (isManager ? const Color(0xFFE3F2FD) : const Color(0xFFE8F5E9)),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(
-                  isManager ? Icons.supervisor_account_rounded : Icons.person_rounded,
-                  color: isLocked ? AppTheme.error : (isManager ? const Color(0xFF1565C0) : AppTheme.primaryLight),
-                  size: 24,
+    return Column(
+      children: [
+        // Filter UI
+        Container(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _searchEmployeeCtrl,
+                  onChanged: (val) => setState(() {}),
+                  style: GoogleFonts.inter(color: AppTheme.textPrimary),
+                  decoration: InputDecoration(
+                    hintText: 'Tìm nhân viên...',
+                    prefixIcon: const Icon(Icons.search_rounded),
+                    suffixIcon: _searchEmployeeCtrl.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear_rounded),
+                            onPressed: () {
+                              _searchEmployeeCtrl.clear();
+                              setState(() {});
+                            },
+                          )
+                        : null,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppTheme.divider)),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppTheme.divider)),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppTheme.primary)),
+                  ),
                 ),
               ),
-              const SizedBox(width: 14),
-              // Info
-              Expanded(child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    Flexible(child: Text(emp['FullName'], style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.textPrimary))),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: isLocked ? AppTheme.error.withAlpha(20) : (isManager ? const Color(0xFFE3F2FD) : const Color(0xFFE8F5E9)),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        isLocked ? 'Đã khóa' : emp['RoleName'],
-                        style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w600, color: isLocked ? AppTheme.error : (isManager ? const Color(0xFF1565C0) : AppTheme.primaryLight)),
-                      ),
-                    ),
-                  ]),
-                  const SizedBox(height: 4),
-                  Text('@${emp['Username']}', style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textSecondary)),
-                  if (emp['StoreName'] != null) ...[
-                    const SizedBox(height: 2),
-                    Row(children: [
-                      const Icon(Icons.store_rounded, size: 11, color: AppTheme.textLight),
-                      const SizedBox(width: 3),
-                      Text(emp['StoreName'], style: GoogleFonts.inter(fontSize: 11, color: AppTheme.textSecondary)),
-                      const SizedBox(width: 10),
-                      const Icon(Icons.phone_rounded, size: 11, color: AppTheme.textLight),
-                      const SizedBox(width: 3),
-                      Text(emp['Phone'] ?? '-', style: GoogleFonts.inter(fontSize: 11, color: AppTheme.textSecondary)),
-                    ]),
-                  ],
-                ],
-              )),
-              const SizedBox(width: 8),
-              // Actions
-              Column(mainAxisSize: MainAxisSize.min, children: [
-                if (widget.roleId == 1)
-                  _buildIconAction(Icons.edit_rounded, AppTheme.primaryLight, () => _showEditDialog(emp), 'Sửa'),
-                const SizedBox(height: 4),
-                _buildIconAction(
-                  isLocked ? Icons.lock_open_rounded : Icons.lock_rounded,
-                  isLocked ? AppTheme.success : AppTheme.error,
-                  () => _toggleLock(emp),
-                  isLocked ? 'Mở khóa' : 'Khóa',
+              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: AppTheme.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.divider),
                 ),
-              ]),
-            ]),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<int?>(
+                    value: _filterEmployeeRoleId,
+                    hint: Text('Vai trò', style: GoogleFonts.inter(color: AppTheme.textSecondary)),
+                    style: GoogleFonts.inter(color: AppTheme.textPrimary),
+                    dropdownColor: AppTheme.white,
+                    items: const [
+                      DropdownMenuItem(value: null, child: Text('Tất cả')),
+                      DropdownMenuItem(value: 2, child: Text('Trưởng CH')),
+                      DropdownMenuItem(value: 3, child: Text('Nhân viên')),
+                    ],
+                    onChanged: (val) {
+                      setState(() => _filterEmployeeRoleId = val);
+                    },
+                  ),
+                ),
+              ),
+            ],
           ),
-        );
-      },
+        ),
+        Expanded(
+          child: filteredEmployees.isEmpty
+            ? Center(
+                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  const Icon(Icons.people_outline_rounded, size: 72, color: AppTheme.divider),
+                  const SizedBox(height: 16),
+                  Text(_employees.isEmpty ? 'Chưa có nhân viên trực thuộc' : 'Không tìm thấy nhân viên', style: GoogleFonts.inter(color: AppTheme.textSecondary, fontSize: 15, fontWeight: FontWeight.w500)),
+                ]),
+              )
+            : ListView.builder(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                itemCount: filteredEmployees.length,
+                itemBuilder: (context, index) {
+                  final emp = filteredEmployees[index];
+                  final isLocked = emp['Status'] == 0;
+                  final isManager = emp['RoleID'] == 2;
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: AppTheme.white,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: isLocked ? AppTheme.error.withAlpha(60) : AppTheme.divider),
+                      boxShadow: AppTheme.cardShadow,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(children: [
+                        // Avatar
+                        Container(
+                          width: 48, height: 48,
+                          decoration: BoxDecoration(
+                            color: isLocked ? const Color(0xFFFFEBEE) : (isManager ? const Color(0xFFE3F2FD) : const Color(0xFFE8F5E9)),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Icon(
+                            isManager ? Icons.supervisor_account_rounded : Icons.person_rounded,
+                            color: isLocked ? AppTheme.error : (isManager ? const Color(0xFF1565C0) : AppTheme.primaryLight),
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        // Info
+                        Expanded(child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(children: [
+                              Flexible(child: Text(emp['FullName'], style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.textPrimary))),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: isLocked ? AppTheme.error.withAlpha(20) : (isManager ? const Color(0xFFE3F2FD) : const Color(0xFFE8F5E9)),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  isLocked ? 'Đã khóa' : emp['RoleName'],
+                                  style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w600, color: isLocked ? AppTheme.error : (isManager ? const Color(0xFF1565C0) : AppTheme.primaryLight)),
+                                ),
+                              ),
+                            ]),
+                            const SizedBox(height: 4),
+                            Text('@${emp['Username']}', style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textSecondary)),
+                            if (emp['StoreName'] != null) ...[
+                              const SizedBox(height: 2),
+                              Row(children: [
+                                const Icon(Icons.store_rounded, size: 11, color: AppTheme.textLight),
+                                const SizedBox(width: 3),
+                                Text(emp['StoreName'], style: GoogleFonts.inter(fontSize: 11, color: AppTheme.textSecondary)),
+                                const SizedBox(width: 10),
+                                const Icon(Icons.phone_rounded, size: 11, color: AppTheme.textLight),
+                                const SizedBox(width: 3),
+                                Text(emp['Phone'] ?? '-', style: GoogleFonts.inter(fontSize: 11, color: AppTheme.textSecondary)),
+                              ]),
+                            ],
+                          ],
+                        )),
+                        const SizedBox(width: 8),
+                        // Actions
+                        Column(mainAxisSize: MainAxisSize.min, children: [
+                          if (widget.roleId == 1)
+                            _buildIconAction(Icons.edit_rounded, AppTheme.primaryLight, () => _showEditDialog(emp), 'Sửa'),
+                          const SizedBox(height: 4),
+                          _buildIconAction(
+                            isLocked ? Icons.lock_open_rounded : Icons.lock_rounded,
+                            isLocked ? AppTheme.success : AppTheme.error,
+                            () => _toggleLock(emp),
+                            isLocked ? 'Mở khóa' : 'Khóa',
+                          ),
+                        ]),
+                      ]),
+                    ),
+                  );
+                },
+              ),
+        ),
+      ],
     );
   }
 

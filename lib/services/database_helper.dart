@@ -1401,6 +1401,39 @@ class DatabaseHelper {
     return await db.rawQuery(query, args);
   }
 
+  // --- Invoices --- //
+  Future<List<Map<String, dynamic>>> getInvoices(int? storeId) async {
+    final db = await database;
+    if (storeId != null) {
+      return await db.rawQuery('''
+        SELECT i.*, e.FullName as EmployeeName, s.StoreName
+        FROM Invoice i
+        LEFT JOIN Employee e ON i.EmployeeID = e.EmployeeID
+        LEFT JOIN Store s ON i.StoreID = s.StoreID
+        WHERE i.StoreID = ?
+        ORDER BY i.InvoiceDate DESC
+      ''', [storeId]);
+    } else {
+      return await db.rawQuery('''
+        SELECT i.*, e.FullName as EmployeeName, s.StoreName
+        FROM Invoice i
+        LEFT JOIN Employee e ON i.EmployeeID = e.EmployeeID
+        LEFT JOIN Store s ON i.StoreID = s.StoreID
+        ORDER BY i.InvoiceDate DESC
+      ''');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getInvoiceDetails(int invoiceId) async {
+    final db = await database;
+    return await db.rawQuery('''
+      SELECT d.*, p.ProductName
+      FROM InvoiceDetail d
+      LEFT JOIN Product p ON d.ProductID = p.ProductID
+      WHERE d.InvoiceID = ?
+    ''', [invoiceId]);
+  }
+
   // Shift Schedule
   Future<int> saveSchedule(int employeeId, String date, String shift) async {
     final db = await database;
