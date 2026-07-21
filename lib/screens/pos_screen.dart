@@ -34,11 +34,19 @@ class _PosScreenState extends State<PosScreen> {
   double _discountPercent = 0.0;
   bool _isLoading = false;
 
+  final _searchProductCtrl = TextEditingController();
+
   // Schedule fields - weekly timetable (read-only)
   late DateTime _weekStart;
   List<Map<String, dynamic>> _storeEmployees = [];
   // _weekShifts[employeeId][dateStr] = shift
   Map<int, Map<String, String>> _weekShifts = {};
+
+  @override
+  void dispose() {
+    _searchProductCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -245,37 +253,89 @@ class _PosScreenState extends State<PosScreen> {
   Widget _buildPosTab() {
     final isMobile = MediaQuery.of(context).size.width < 750;
 
-    if (isMobile) {
-      return Stack(
+    final query = _searchProductCtrl.text.toLowerCase();
+    final filteredProducts = _products.where((p) {
+      final name = (p['ProductName'] ?? '').toString().toLowerCase();
+      final category = (p['CategoryName'] ?? '').toString().toLowerCase();
+      return query.isEmpty || name.contains(query) || category.contains(query);
+    }).toList();
+
+    Widget buildProductGrid() {
+      return Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 90),
-            child: _products.isEmpty
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: TextField(
+              controller: _searchProductCtrl,
+              onChanged: (val) => setState(() {}),
+              style: GoogleFonts.inter(color: AppTheme.textPrimary),
+              decoration: InputDecoration(
+                hintText: 'Tìm sản phẩm...',
+                prefixIcon: const Icon(Icons.search_rounded),
+                suffixIcon: _searchProductCtrl.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear_rounded),
+                        onPressed: () {
+                          _searchProductCtrl.clear();
+                          setState(() {});
+                        },
+                      )
+                    : null,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppTheme.divider),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppTheme.divider),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppTheme.primary),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: filteredProducts.isEmpty
                 ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Icon(Icons.inventory_2_outlined, size: 64, color: AppTheme.divider),
                         const SizedBox(height: 16),
-                        Text('Không có sản phẩm nào trong kho.', style: GoogleFonts.inter(color: AppTheme.textSecondary)),
+                        Text(_products.isEmpty ? 'Không có sản phẩm nào trong kho.' : 'Không tìm thấy sản phẩm.', style: GoogleFonts.inter(color: AppTheme.textSecondary)),
                       ],
                     ),
                   )
                 : GridView.builder(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
+                    padding: const EdgeInsets.all(12),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: isMobile ? 2 : 3,
                       crossAxisSpacing: 12,
                       mainAxisSpacing: 12,
-                      childAspectRatio: 0.82,
+                      childAspectRatio: isMobile ? 0.82 : 0.88,
                     ),
-                    itemCount: _products.length,
+                    itemCount: filteredProducts.length,
                     itemBuilder: (context, index) {
-                      final prod = _products[index];
+                      final prod = filteredProducts[index];
                       final id = prod['ProductID'] as int;
                       final inCart = _cart[id] ?? 0;
                       return _buildProductCard(prod, id, inCart);
                     },
                   ),
+          ),
+        ],
+      );
+    }
+
+    if (isMobile) {
+      return Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 90),
+            child: buildProductGrid(),
           ),
           if (_cart.isNotEmpty)
             Positioned(
@@ -327,35 +387,7 @@ class _PosScreenState extends State<PosScreen> {
         // Product list area
         Expanded(
           flex: 3,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: _products.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.inventory_2_outlined, size: 64, color: AppTheme.divider),
-                        const SizedBox(height: 16),
-                        Text('Không có sản phẩm nào trong kho.', style: GoogleFonts.inter(color: AppTheme.textSecondary)),
-                      ],
-                    ),
-                  )
-                : GridView.builder(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 0.88,
-                    ),
-                    itemCount: _products.length,
-                    itemBuilder: (context, index) {
-                      final prod = _products[index];
-                      final id = prod['ProductID'] as int;
-                      final inCart = _cart[id] ?? 0;
-                      return _buildProductCard(prod, id, inCart);
-                    },
-                  ),
-          ),
+          child: buildProductGrid(),
         ),
         // Cart panel area
         Expanded(

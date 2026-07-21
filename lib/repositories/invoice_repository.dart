@@ -18,4 +18,12 @@ class InvoiceRepository {
   Future<List<Map<String, dynamic>>> getRevenue(int? storeId, String period) async {
     return await DatabaseHelper.instance.getRevenue(storeId, period);
   }
+
+  Future<List<Map<String, dynamic>>> getInvoices(int? storeId) async {
+    return await DatabaseHelper.instance.getInvoices(storeId);
+  }
+
+  Future<List<Map<String, dynamic>>> getInvoiceDetails(int invoiceId) async {
+    return await DatabaseHelper.instance.getInvoiceDetails(invoiceId);
+  }
 }
